@@ -1,0 +1,9 @@
+{
+  "name": "backend-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal package.json to avoid npm ENOENT when running npm in backend/app. This project is Python-based; use Python to run the backend.",
+  "scripts": {
+    "dev": "echo This is a Python backend; run it with Python instead of npm."
+  }
+}
