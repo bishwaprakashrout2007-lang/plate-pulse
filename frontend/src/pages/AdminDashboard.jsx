@@ -24,6 +24,8 @@ const AdminDashboard = () => {
   const [adminCallJoined, setAdminCallJoined] = useState(false);
   const [simulatedNgoStream, setSimulatedNgoStream] = useState(false);
   const localVideoRef = useRef(null);
+  const zegoContainerRef = useRef(null);
+  const zegoInstanceRef = useRef(null);
 
   const fetchAdminData = async () => {
     if (!user || user.role !== 'Admin') {
@@ -105,32 +107,77 @@ const AdminDashboard = () => {
   const startKycCall = (ngo) => {
     setActiveKycNgo(ngo);
     setAdminCallJoined(true);
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then((stream) => {
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-        // Simulate NGO representative joining after 2 seconds
-        setTimeout(() => {
-          setSimulatedNgoStream(true);
-        }, 2000);
-      })
-      .catch((err) => {
-        console.warn("Camera/mic access denied on admin browser stream.");
-        setTimeout(() => {
-          setSimulatedNgoStream(true);
-        }, 2000);
-      });
   };
 
   const leaveKycCall = () => {
     setAdminCallJoined(false);
-    setSimulatedNgoStream(false);
-    if (localVideoRef.current && localVideoRef.current.srcObject) {
-      const tracks = localVideoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
+    if (zegoInstanceRef.current) {
+      try {
+        zegoInstanceRef.current.destroy();
+      } catch (e) {
+        console.warn("Error destroying Zego instance:", e);
+      }
+      zegoInstanceRef.current = null;
     }
   };
+
+  useEffect(() => {
+    if (adminCallJoined && activeKycNgo && zegoContainerRef.current && user) {
+      const initZego = async () => {
+        try {
+          const appID = 298725129;
+          const serverSecret = "874527307b7b70bc7664360d2a705910";
+          const roomID = activeKycNgo.id;
+          const userID = user.userId;
+          const userName = user.name || "Admin Auditor";
+
+          const ZegoUIKitPrebuilt = window.ZegoUIKitPrebuilt;
+          if (!ZegoUIKitPrebuilt) {
+            console.error("Zego SDK not loaded yet.");
+            return;
+          }
+
+          const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+            appID,
+            serverSecret,
+            roomID,
+            userID,
+            userName
+          );
+
+          const zp = ZegoUIKitPrebuilt.create(kitToken);
+          zegoInstanceRef.current = zp;
+
+          zp.joinRoom({
+            container: zegoContainerRef.current,
+            turnOnMicrophoneWhenJoining: true,
+            turnOnCameraWhenJoining: true,
+            showMyCameraToggleButton: true,
+            showMyMicrophoneToggleButton: true,
+            showAudioVideoSettingsButton: true,
+            showScreenSharingButton: true,
+            showTextChat: true,
+            showUserList: true,
+            maxUsers: 2,
+            layout: "Auto",
+            showLayoutButton: false,
+            scenario: {
+              mode: ZegoUIKitPrebuilt.OneONoneCall,
+              config: {
+                role: ZegoUIKitPrebuilt.Host,
+              },
+            },
+            onLeaveRoom: () => {
+              leaveKycCall();
+            }
+          });
+        } catch (e) {
+          console.error("Zego initialization error:", e);
+        }
+      };
+      initZego();
+    }
+  }, [adminCallJoined, activeKycNgo, user]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -400,35 +447,8 @@ const AdminDashboard = () => {
             </button>
           </div>
           
-          <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-            {/* Admin camera feed */}
-            <div className="bg-zinc-800 rounded-xl relative overflow-hidden border border-zinc-700 flex items-center justify-center">
-              <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-              <div className="absolute bottom-3 left-3 bg-black/60 px-3 py-1 rounded text-white text-xs font-bold">
-                You (Admin Auditor)
-              </div>
-            </div>
-
-            {/* NGO Camera feed */}
-            <div className="bg-zinc-800 rounded-xl relative overflow-hidden border border-zinc-700 flex items-center justify-center">
-              {simulatedNgoStream ? (
-                <>
-                  <img 
-                    src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600" 
-                    alt="NGO Representative" 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute bottom-3 left-3 bg-black/60 px-3 py-1 rounded text-white text-xs font-bold">
-                    {activeKycNgo.ngoName} Representative
-                  </div>
-                </>
-              ) : (
-                <div className="text-center text-zinc-400 space-y-2">
-                  <Clock className="w-8 h-8 text-amber-500 animate-spin mx-auto" />
-                  <p className="text-xs">Waiting for NGO representative to connect...</p>
-                </div>
-              )}
-            </div>
+          <div className="flex-grow p-4 bg-zinc-900 flex items-center justify-center relative">
+            <div ref={zegoContainerRef} className="w-full h-full min-h-[450px]" />
           </div>
 
           {/* Quick verification buttons on call footer */}
