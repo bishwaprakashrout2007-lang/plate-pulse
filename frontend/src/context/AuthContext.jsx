@@ -66,6 +66,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (googleUser) => {
+    try {
+      const res = await api.post('/auth/google-login', {
+        email: googleUser.email,
+        name: googleUser.displayName || googleUser.email.split('@')[0],
+        uid: googleUser.uid
+      });
+      const { access_token, role, userId, name } = res.data;
+      
+      localStorage.setItem('platepulse_token', access_token);
+      
+      let status = 'Unverified';
+      if (role === 'NGO') {
+        try {
+          const ngoRes = await api.get(`/ngos/${userId}`);
+          status = ngoRes.data.status;
+        } catch (e) {
+          status = 'Unverified';
+        }
+      }
+
+      const userData = { userId, email: googleUser.email, role, name, status };
+      setUser(userData);
+      localStorage.setItem('platepulse_user', JSON.stringify(userData));
+      return userData;
+    } catch (error) {
+      throw error.response?.data?.detail || "Google Login failed.";
+    }
+  };
+
   const register = async (name, email, phone, password, role = 'Client') => {
     try {
       // Create user record in our DB
@@ -133,6 +163,7 @@ export const AuthProvider = ({ children }) => {
       user,
       loading,
       login,
+      loginWithGoogle,
       register,
       sendOtp,
       verifyOtp,

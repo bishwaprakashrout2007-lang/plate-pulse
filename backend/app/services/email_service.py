@@ -8,7 +8,8 @@ logger = logging.getLogger("platepulse.email")
 
 def send_email(to_email: str, subject: str, body_text: str):
     # Fallback to logger if SMTP configuration is empty or dummy
-    if not settings.SMTP_USER or "dummy" in settings.SMTP_USER or not settings.SMTP_PASSWORD:
+    is_mock = not settings.SMTP_USER or "dummy" in settings.SMTP_USER.lower() or not settings.SMTP_PASSWORD
+    if is_mock:
         logger.info(f"--- MOCK EMAIL SENT ---")
         logger.info(f"To: {to_email}")
         logger.info(f"Subject: {subject}")
@@ -18,25 +19,33 @@ def send_email(to_email: str, subject: str, body_text: str):
 
     try:
         msg = MIMEMultipart()
-        msg['From'] = settings.SMTP_FROM
+        # Fallback to SMTP_USER if SMTP_FROM is not set or default
+        from_addr = settings.SMTP_FROM
+        if not from_addr or from_addr == "noreply@platepulse.org":
+            from_addr = settings.SMTP_USER
+
+        msg['From'] = from_addr
         msg['To'] = to_email
         msg['Subject'] = subject
 
         msg.attach(MIMEText(body_text, 'plain'))
 
-        # Standard SMTP connection
-        server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
-        server.starttls()
+        # SMTP SSL or STARTTLS connection based on port
+        if settings.SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10)
+        else:
+            server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10)
+            server.starttls()
+            
         server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-        server.sendmail(settings.SMTP_FROM, to_email, msg.as_string())
+        server.sendmail(from_addr, to_email, msg.as_string())
         server.quit()
         logger.info(f"Email successfully sent to {to_email}")
         return True
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {e}")
-        # Always return True in local dev/testing so it doesn't block the UI
-        logger.info(f"[DEV FALLBACK] Mock email detail printed above.")
-        return True
+        # When real SMTP is configured and fails, return False so the API can report it.
+        return False
 
 def send_otp_email(to_email: str, otp: str):
     subject = "PlatePulse - Email OTP Verification"

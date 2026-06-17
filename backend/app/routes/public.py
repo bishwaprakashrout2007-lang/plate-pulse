@@ -81,20 +81,38 @@ async def list_gallery_images(db=Depends(get_db)):
         res = [
             {
                 "id": "1",
-                "imageUrl": "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600",
-                "description": "Food drive at local orphanage",
+                "imageUrl": "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800",
+                "description": "Volunteers carefully sorting and packing nutritious food boxes for local shelters.",
                 "createdAt": datetime.utcnow()
             },
             {
                 "id": "2",
-                "imageUrl": "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=600",
-                "description": "Volunteer distribution network",
+                "imageUrl": "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800",
+                "description": "Volunteers distributing meals and fresh fruit to children at the community shelter.",
                 "createdAt": datetime.utcnow()
             },
             {
                 "id": "3",
-                "imageUrl": "https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=600",
-                "description": "Sharing meals, spreading smiles",
+                "imageUrl": "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=800",
+                "description": "A bustling community donation center receiving surplus food from restaurant partners.",
+                "createdAt": datetime.utcnow()
+            },
+            {
+                "id": "4",
+                "imageUrl": "https://images.unsplash.com/photo-1599059813005-11265ba4b4ce?w=800",
+                "description": "Preparing warm, home-cooked food in collaboration with certified local NGO kitchens.",
+                "createdAt": datetime.utcnow()
+            },
+            {
+                "id": "5",
+                "imageUrl": "https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=800",
+                "description": "Delivering fresh organic apples and healthy meals to low-income families.",
+                "createdAt": datetime.utcnow()
+            },
+            {
+                "id": "6",
+                "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800",
+                "description": "Carefully selected fresh ingredients and vegetables saved from banquet surplus.",
                 "createdAt": datetime.utcnow()
             }
         ]

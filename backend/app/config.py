@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     ZEGO_APP_ID: int = 123456789
     ZEGO_SERVER_SECRET: str = "dummy_zegocloud_secret"
 
+    # Firebase Settings
+    FIREBASE_SERVICE_ACCOUNT_JSON: str = ""
+    FIREBASE_CREDENTIALS_JSON: str = ""
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"),
         env_file_encoding="utf-8",

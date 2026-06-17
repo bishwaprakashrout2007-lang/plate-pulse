@@ -4,13 +4,15 @@ import { useAuth } from '../context/AuthContext';
 import { Heart, User, Mail, Phone, Lock, Eye, EyeOff, Sparkles, Building, Landmark, Image } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth as firebaseAuth } from '../firebase';
 
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const registerParam = searchParams.get('register');
 
-  const { login, register, sendOtp, verifyOtp, registerNgoProfile } = useAuth();
+  const { login, loginWithGoogle, register, sendOtp, verifyOtp, registerNgoProfile } = useAuth();
   
   const [isLogin, setIsLogin] = useState(!registerParam);
   const [role, setRole] = useState(registerParam === 'ngo' ? 'NGO' : 'Client'); // 'Client' or 'NGO'
@@ -70,6 +72,35 @@ const Login = () => {
       setOtpSent(false);
     } catch (err) {
       setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(firebaseAuth, provider);
+      const googleUser = result.user;
+      
+      const loggedUser = await loginWithGoogle(googleUser);
+      
+      if (loggedUser.role === 'Admin') {
+        navigate('/admin');
+      } else if (loggedUser.role === 'NGO') {
+        if (loggedUser.status === 'Verified') {
+          navigate('/ngo');
+        } else {
+          navigate('/ngo/verify');
+        }
+      } else {
+        navigate('/client');
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.toString());
     } finally {
       setLoading(false);
     }
@@ -426,6 +457,29 @@ const Login = () => {
               </button>
             </form>
           )}
+
+          <div className="flex flex-col gap-3">
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-zinc-300/30"></div>
+              <span className="flex-shrink mx-4 text-zinc-500 text-xs font-bold uppercase tracking-wider">or</span>
+              <div className="flex-grow border-t border-zinc-300/30"></div>
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="flex items-center justify-center gap-2.5 w-full py-2.5 border border-zinc-200/60 dark:border-zinc-850 rounded-xl bg-white/40 hover:bg-amber-500/10 dark:bg-zinc-900/40 dark:hover:bg-amber-500/10 text-sm font-semibold transition-all hover:scale-[1.01] active:scale-[0.99] shadow-sm hover:shadow"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="#EA4335"
+                  d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114A5.53 5.53 0 0 1 8.4 13c0-3.047 2.47-5.518 5.518-5.518 1.345 0 2.57.48 3.527 1.274l3.125-3.125C18.665 3.827 16.48 3 14 3 8.486 3 4 7.486 4 13s4.486 10 10 10c5.52 0 10-4.48 10-10 0-.82-.09-1.616-.245-2.385H12.24z"
+                />
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+          </div>
 
           <div className="text-center pt-2 border-t border-white/20">
             <button

@@ -40,35 +40,74 @@ const LandingPage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative py-20 px-4 max-w-7xl mx-auto flex flex-col items-center text-center">
+      <section className="py-20 px-4 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-3xl"
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          className="lg:col-span-7 text-center lg:text-left space-y-6"
         >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-xs font-bold text-amber-600 dark:text-amber-400 mb-6 animate-bounce">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-xs font-bold text-amber-600 dark:text-amber-400 mb-2 animate-bounce">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Empowering Communities, Zero Food Waste</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-bold font-sans tracking-tight leading-tight">
-            Connecting <span className="text-amber-500 bg-amber-500/10 px-2 rounded-lg">Surplus Food</span> <br />
+            Connecting <span className="text-amber-500 bg-amber-500/10 px-3 py-0.5 rounded-xl">Surplus Food</span> <br className="hidden sm:inline" />
             with Those Who Need It Most
           </h1>
           
-          <p className="mt-6 text-lg text-zinc-600 dark:text-zinc-400 font-medium">
+          <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 font-medium max-w-xl">
             PlatePulse is a modern, verified food donation network bridging restaurants, wedding caterers, and individuals with local, verified NGOs to eliminate urban hunger and reduce carbon footprint.
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-4 justify-center">
-            <Link to="/login" className="glass-btn-primary py-3 px-6 text-base font-semibold group">
+          <div className="flex flex-wrap gap-4 justify-center lg:justify-start pt-4">
+            <Link to="/login" className="glass-btn-primary py-3.5 px-6 text-base font-semibold group hover:scale-[1.02] active:scale-[0.98] transition-transform">
               Donate Food Now
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link to="/login?register=ngo" className="glass-btn-secondary py-3 px-6 text-base font-semibold">
+            <Link to="/login?register=ngo" className="glass-btn-secondary py-3.5 px-6 text-base font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform">
               Become partner NGO
             </Link>
+          </div>
+        </motion.div>
+
+        {/* Right-hand Hero Image Column with float animation and glass card badges */}
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="lg:col-span-5 relative flex justify-center w-full animate-float mt-8 lg:mt-0"
+        >
+          <div className="relative max-w-md w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-white/40 dark:border-zinc-800/40 glass-panel">
+            <img
+              src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800"
+              alt="Volunteers sharing food"
+              className="w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+          </div>
+          
+          {/* Floating Badge 1 */}
+          <div className="absolute -top-6 -left-6 glass-panel p-4 flex items-center gap-3 bg-white/90 dark:bg-zinc-900/90 shadow-lg border border-white/40 max-w-[200px]">
+            <div className="p-2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl">
+              <Heart className="w-5 h-5 fill-amber-500" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Meals Served</div>
+              <div className="text-lg font-extrabold text-brand-dark dark:text-white">15,000+</div>
+            </div>
+          </div>
+
+          {/* Floating Badge 2 */}
+          <div className="absolute -bottom-6 -right-6 glass-panel p-4 flex items-center gap-3 bg-white/90 dark:bg-zinc-900/90 shadow-lg border border-white/40 max-w-[220px]">
+            <div className="p-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Network Partners</div>
+              <div className="text-lg font-extrabold text-brand-dark dark:text-white">100% Verified</div>
+            </div>
           </div>
         </motion.div>
       </section>
@@ -169,8 +208,63 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Impact Gallery Showcase */}
+      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <h2 className="text-3xl font-extrabold font-sans">Visualizing Our Mission</h2>
+          <p className="text-sm text-zinc-500 mt-2">Real moments of food rescue, safety compliance, and community care across our network</p>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
+          <div className="group relative overflow-hidden rounded-3xl aspect-[4/3] shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+            <img 
+              src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=500" 
+              alt="Volunteer packing food" 
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+              <span className="text-xs text-white font-bold uppercase tracking-wider">Food Rescue Crates</span>
+              <p className="text-[10px] text-zinc-300 mt-0.5">Volunteers loading and verifying surplus food packages</p>
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded-3xl aspect-[4/3] shadow-lg border border-white/20 hover:shadow-xl md:translate-y-6 transition-all duration-300">
+            <img 
+              src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=500" 
+              alt="Distributing meals" 
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+              <span className="text-xs text-white font-bold uppercase tracking-wider">Community Shelter Support</span>
+              <p className="text-[10px] text-zinc-300 mt-0.5">Distributing warm meals to shelters daily</p>
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded-3xl aspect-[4/3] shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+            <img 
+              src="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=500" 
+              alt="NGO Food storage" 
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+              <span className="text-xs text-white font-bold uppercase tracking-wider">Verified Kitchen Partners</span>
+              <p className="text-[10px] text-zinc-300 mt-0.5">Clean audited food storage facilities</p>
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded-3xl aspect-[4/3] shadow-lg border border-white/20 hover:shadow-xl md:translate-y-6 transition-all duration-300">
+            <img 
+              src="https://images.unsplash.com/photo-1599059813005-11265ba4b4ce?w=500" 
+              alt="Cooking hot meals" 
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+              <span className="text-xs text-white font-bold uppercase tracking-wider">Daily Hot Meal Programs</span>
+              <p className="text-[10px] text-zinc-300 mt-0.5">NGOs cooking fresh meals for distribution</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
-      <section className="py-16 bg-white/20 dark:bg-zinc-900/10 border-y border-white/10">
+      <section className="py-16 bg-white/20 dark:bg-zinc-900/10 border-y border-white/10 mt-6 md:mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-12">
             <h2 className="text-3xl font-bold font-sans">Success Stories</h2>
