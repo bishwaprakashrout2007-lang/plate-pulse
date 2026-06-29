@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Heart, User, Mail, Phone, Lock, Eye, EyeOff, Sparkles, Building, Landmark, Image } from 'lucide-react';
+import { Heart, User, Mail, Phone, Lock, Eye, EyeOff, Sparkles, Building, Landmark, Image, AlertTriangle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -85,7 +85,7 @@ const Login = () => {
       const result = await signInWithPopup(firebaseAuth, provider);
       const googleUser = result.user;
       
-      const loggedUser = await loginWithGoogle(googleUser);
+      const loggedUser = await loginWithGoogle(googleUser, role);
       
       if (loggedUser.role === 'Admin') {
         navigate('/admin');
@@ -205,8 +205,9 @@ const Login = () => {
           )}
 
           {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400 font-semibold">
-              ⚠️ {error}
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400 font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <span>{error}</span>
             </div>
           )}
 

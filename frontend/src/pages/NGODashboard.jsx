@@ -355,13 +355,15 @@ const NGODashboard = () => {
         </div>
 
         {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 font-semibold mb-6">
-            ⚠️ {error}
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 font-semibold mb-6 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4" />
+            <span>{error}</span>
           </div>
         )}
         {success && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-sm text-emerald-600 font-semibold mb-6">
-            ✓ {success}
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-sm text-emerald-600 font-semibold mb-6 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" />
+            <span>{success}</span>
           </div>
         )}
 

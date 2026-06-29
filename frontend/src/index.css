@@ -6,69 +6,69 @@
 
 @layer base {
   body {
-    @apply bg-brand-yellow text-brand-dark font-sans transition-colors duration-300 min-h-screen selection:bg-brand-accent/30 overflow-x-hidden;
-    background-image: radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.06) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
-                      radial-gradient(at 50% 50%, rgba(239, 68, 68, 0.02) 0px, transparent 50%);
+    @apply bg-brand-yellow text-brand-dark font-sans transition-colors duration-500 min-h-screen selection:bg-brand-accent/20 overflow-x-hidden;
+    background-image: radial-gradient(at 0% 0%, rgba(255, 95, 56, 0.04) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.04) 0px, transparent 50%),
+                      radial-gradient(at 50% 50%, rgba(244, 63, 94, 0.015) 0px, transparent 50%);
   }
   
   /* Dark mode overrides */
   body.dark {
     @apply bg-brand-dark text-zinc-100;
-    background-image: radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.08) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-                      radial-gradient(at 50% 50%, rgba(239, 68, 68, 0.02) 0px, transparent 50%);
+    background-image: radial-gradient(at 0% 0%, rgba(255, 95, 56, 0.06) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.04) 0px, transparent 50%),
+                      radial-gradient(at 50% 50%, rgba(244, 63, 94, 0.02) 0px, transparent 50%);
   }
 }
 
 @layer components {
-  /* Glassmorphism Styles */
+  /* Glassmorphism Styles - Elevated and Smooth */
   .glass-panel {
-    @apply bg-white/75 backdrop-blur-xl border border-white/40 shadow-xl shadow-brand-dark/2.5 rounded-3xl transition-all duration-300;
+    @apply bg-white/70 backdrop-blur-2xl border border-white/40 shadow-xl shadow-brand-dark/2.5 rounded-3xl transition-all duration-500;
   }
   .dark .glass-panel {
-    @apply bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/80 shadow-2xl shadow-black/50;
+    @apply bg-zinc-900/80 backdrop-blur-2xl border border-zinc-850/80 shadow-2xl shadow-black/40;
   }
 
   .glass-card {
-    @apply bg-white/60 backdrop-blur-lg border border-white/30 hover:border-brand-accent/30 hover:bg-white/85 hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 rounded-2xl shadow-md hover:shadow-xl hover:shadow-brand-accent/5;
+    @apply bg-white/50 backdrop-blur-xl border border-white/30 hover:border-brand-accent/30 hover:bg-white/80 hover:-translate-y-1 hover:scale-[1.015] transition-all duration-300 rounded-2xl shadow-md hover:shadow-xl hover:shadow-brand-accent/5;
   }
   .dark .glass-card {
-    @apply bg-zinc-900/50 backdrop-blur-lg border border-zinc-800/60 hover:border-brand-accent/20 hover:bg-zinc-900/70 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-brand-accent/5;
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-zinc-850/50 hover:border-brand-accent/20 hover:bg-zinc-900/60 hover:-translate-y-1 hover:scale-[1.015] hover:shadow-brand-accent/5;
   }
 
   .glass-input {
-    @apply bg-white/40 backdrop-blur-sm border border-white/30 rounded-xl px-4 py-2.5 text-brand-dark focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent/60 placeholder-zinc-500/80 transition-all duration-200;
+    @apply bg-white/30 backdrop-blur-md border border-white/30 rounded-xl px-4 py-2.5 text-brand-dark focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent/40 placeholder-zinc-400 transition-all duration-355;
   }
   .dark .glass-input {
-    @apply bg-zinc-950/40 backdrop-blur-sm border border-zinc-800 text-zinc-100 focus:ring-brand-accent/30 focus:border-brand-accent/50 placeholder-zinc-600;
+    @apply bg-zinc-950/30 backdrop-blur-md border border-zinc-850 text-zinc-100 focus:ring-brand-accent/20 focus:border-brand-accent/30 placeholder-zinc-500;
   }
 
   .glass-btn-primary {
-    @apply bg-brand-accent hover:bg-amber-600 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-brand-accent/15 hover:shadow-brand-accent/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2;
+    @apply bg-brand-accent hover:bg-brand-accent/90 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-brand-accent/10 hover:shadow-brand-accent/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2;
   }
   .dark .glass-btn-primary {
-    @apply bg-brand-accent hover:bg-amber-500 text-brand-dark shadow-brand-accent/5 hover:shadow-brand-accent/15;
+    @apply bg-brand-accent hover:bg-brand-accent/90 text-brand-dark shadow-brand-accent/5 hover:shadow-brand-accent/15;
   }
 
   .glass-btn-secondary {
-    @apply bg-white/60 hover:bg-white/80 border border-brand-accent/20 hover:border-brand-accent/40 text-brand-dark font-semibold px-5 py-2.5 rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2;
+    @apply bg-white/50 hover:bg-white/70 border border-brand-accent/10 hover:border-brand-accent/20 text-brand-dark font-semibold px-5 py-2.5 rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2;
   }
   .dark .glass-btn-secondary {
-    @apply bg-brand-dark/40 hover:bg-brand-dark/60 border border-zinc-800 hover:border-zinc-700 text-zinc-100;
+    @apply bg-zinc-900/40 hover:bg-zinc-900/60 border border-zinc-850 hover:border-zinc-800 text-zinc-100;
   }
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-brand-accent/40 rounded-full hover:bg-brand-accent/60 transition-colors duration-200;
+  @apply bg-brand-accent/20 rounded-full hover:bg-brand-accent/40 transition-colors duration-300;
 }
 .dark ::-webkit-scrollbar-thumb {
   @apply bg-zinc-800 rounded-full hover:bg-zinc-700;
@@ -77,9 +77,9 @@
 /* Map Leaflet styling overrides */
 .leaflet-container {
   font-family: inherit;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 .dark .leaflet-container {
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);

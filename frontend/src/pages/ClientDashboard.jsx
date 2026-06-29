@@ -552,14 +552,16 @@ const ClientDashboard = () => {
             </div>
 
             {formError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 font-semibold">
-                ⚠️ {formError}
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 font-semibold flex items-center gap-2">
+                <Heart className="w-4 h-4 text-red-500 animate-pulse" />
+                <span>{formError}</span>
               </div>
             )}
             
             {successMsg && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-sm text-emerald-600 font-semibold">
-                ✓ {successMsg}
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-sm text-emerald-600 font-semibold flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                <span>{successMsg}</span>
               </div>
             )}
 

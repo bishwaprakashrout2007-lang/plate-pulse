@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Image, Upload, Plus } from 'lucide-react';
+import { Image, Upload, Plus, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -22,7 +22,7 @@ const Gallery = () => {
       const res = await api.get('/public/gallery');
       setItems(res.data);
     } catch (e) {
-      console.error(e);
+      console.error("Error fetching gallery:", e);
     } finally {
       setLoading(false);
     }
@@ -32,20 +32,20 @@ const Gallery = () => {
     fetchGallery();
   }, []);
 
-  const handleAddImage = async (e) => {
+  const handleAddPhoto = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setError('');
 
     try {
-      const img = imageUrl || "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600";
-      await api.post('/public/gallery', { imageUrl: img, description });
+      const imgLink = imageUrl || "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800";
+      await api.post('/public/gallery', { imageUrl: imgLink, description });
       setImageUrl('');
       setDescription('');
       setShowAddForm(false);
       fetchGallery();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to add gallery image.');
+      setError('Failed to publish photo.');
     } finally {
       setLoading(false);
     }
@@ -55,26 +55,28 @@ const Gallery = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
 
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-        <div className="flex justify-between items-center mb-8">
+      <main className="flex-grow max-w-7xl mx-auto px-4 py-12 w-full">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-extrabold font-sans">Volunteering Gallery</h1>
-            <p className="text-sm text-zinc-500 mt-1">Glimpses of food waste mitigation drives, community support distributions, and volunteer networks</p>
+            <h1 className="text-4xl font-extrabold font-sans">Appreciation Gallery</h1>
+            <p className="text-zinc-500 text-sm mt-1">Glimpses of food deliveries, happy faces, and verified NGO distributions.</p>
           </div>
+
           {user && (
-            <button
+            <button 
               onClick={() => setShowAddForm(!showAddForm)}
-              className="glass-btn-primary py-2 px-4 text-xs font-bold"
+              className="glass-btn-primary py-2.5 px-4 text-sm"
             >
               <Plus className="w-4 h-4" />
-              <span>Share Image</span>
+              <span>Share Glimpse</span>
             </button>
           )}
         </div>
 
         {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 font-semibold mb-6">
-            ⚠️ {error}
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 font-semibold mb-6 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            <span>{error}</span>
           </div>
         )}
 

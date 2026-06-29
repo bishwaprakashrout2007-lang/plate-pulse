@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Star, MessageSquare, Send } from 'lucide-react';
+import { Star, MessageSquare, Send, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 
 const Feedback = () => {
@@ -22,7 +22,7 @@ const Feedback = () => {
       const res = await api.get('/public/feedback');
       setFeedbacks(res.data);
     } catch (e) {
-      console.error(e);
+      console.error("Error fetching feedback:", e);
     } finally {
       setLoading(false);
     }
@@ -34,21 +34,20 @@ const Feedback = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccess('');
-    setError('');
     setLoading(true);
+    setError('');
+    setSuccess('');
 
     try {
       await api.post('/public/feedback', { userName, email, message, rating });
-      setSuccess('Your feedback has been published to our testimonial slider. Thank you!');
+      setSuccess('Thank you! Your feedback has been recorded.');
       setUserName('');
       setEmail('');
       setMessage('');
       setRating(5);
       fetchFeedback();
-      setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
-      setError('Failed to submit feedback.');
+      setError(err.response?.data?.detail || 'Failed to submit feedback.');
     } finally {
       setLoading(false);
     }

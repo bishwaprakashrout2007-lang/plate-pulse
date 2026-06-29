@@ -61,11 +61,13 @@ async def register_endpoint(user_in: UserCreate, db=Depends(get_db)):
     return user_dict
 
 from pydantic import BaseModel
+from typing import Optional
 
 class GoogleLoginRequest(BaseModel):
     email: str
     name: str
     uid: str
+    role: Optional[str] = "Client"
 
 @router.post("/google-login", response_model=TokenResponse)
 async def google_login_endpoint(req: GoogleLoginRequest, db=Depends(get_db)):
@@ -74,8 +76,8 @@ async def google_login_endpoint(req: GoogleLoginRequest, db=Depends(get_db)):
     # Check if user already exists
     user = await db.users.find_one({"email": email})
     
-    role = "Client"
-    # Check if role is admin based on hardcoded lists
+    # Determine role
+    role = req.role or "Client"
     if email in ADMIN_EMAILS:
         role = "Admin"
         

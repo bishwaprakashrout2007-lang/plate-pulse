@@ -22,11 +22,18 @@ export const AuthProvider = ({ children }) => {
           
           // Re-fetch details of user to keep role sync
           if (parsedUser.role === 'NGO') {
-            const res = await api.get(`/ngos/${parsedUser.userId}`);
-            // Update status (e.g. Verified / Pending Verification)
-            const updated = { ...parsedUser, status: res.data.status };
-            setUser(updated);
-            localStorage.setItem('platepulse_user', JSON.stringify(updated));
+            try {
+              const res = await api.get(`/ngos/${parsedUser.userId}`);
+              // Update status (e.g. Verified / Pending Verification)
+              const updated = { ...parsedUser, status: res.data.status };
+              setUser(updated);
+              localStorage.setItem('platepulse_user', JSON.stringify(updated));
+            } catch (e) {
+              console.warn("Could not fetch NGO profile status, defaulting to Unverified:", e);
+              // Do not log out. Just keep the user session with their local status
+              const updated = { ...parsedUser, status: parsedUser.status || 'Unverified' };
+              setUser(updated);
+            }
           }
         } catch (e) {
           console.error("Failed to load user session:", e);
@@ -66,12 +73,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithGoogle = async (googleUser) => {
+  const loginWithGoogle = async (googleUser, selectedRole = 'Client') => {
     try {
       const res = await api.post('/auth/google-login', {
         email: googleUser.email,
         name: googleUser.displayName || googleUser.email.split('@')[0],
-        uid: googleUser.uid
+        uid: googleUser.uid,
+        role: selectedRole
       });
       const { access_token, role, userId, name } = res.data;
       

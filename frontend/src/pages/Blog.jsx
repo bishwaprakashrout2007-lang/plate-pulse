@@ -75,8 +75,9 @@ const Blog = () => {
         </div>
 
         {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 font-semibold mb-6">
-            ⚠️ {error}
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 font-semibold mb-6 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-red-500" />
+            <span>{error}</span>
           </div>
         )}
 
