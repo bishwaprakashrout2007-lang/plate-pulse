@@ -9,7 +9,6 @@ from .config import settings
 # Setup bcrypt hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
-
 # Admin credentials from user requirements
 ADMIN_EMAILS = {"bishwaprakashrout2007@gmail.com", "asitraut2006@gmail.com"}
 ADMIN_PHONES = {"8984676600", "9861216929"}
