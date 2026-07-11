@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Heart, User, Mail, Phone, Lock, Eye, EyeOff, Sparkles, Building, Landmark, Image, AlertTriangle, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth as firebaseAuth } from '../firebase';
 import api from '../services/api';
 
@@ -41,6 +41,40 @@ const Login = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
+
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(firebaseAuth);
+        if (result && result.user) {
+          setLoading(true);
+          const googleUser = result.user;
+          const savedRole = localStorage.getItem('google_login_role') || 'Client';
+          localStorage.removeItem('google_login_role');
+          
+          const loggedUser = await loginWithGoogle(googleUser, savedRole);
+          
+          if (loggedUser.role === 'Admin') {
+            navigate('/admin');
+          } else if (loggedUser.role === 'NGO') {
+            if (loggedUser.status === 'Verified') {
+              navigate('/ngo');
+            } else {
+              navigate('/ngo/verify');
+            }
+          } else {
+            navigate('/client');
+          }
+        }
+      } catch (err) {
+        console.error("Firebase redirect login error:", err);
+        setError(err.toString());
+      } finally {
+        setLoading(false);
+      }
+    };
+    handleRedirectResult();
+  }, [navigate]);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
@@ -108,7 +142,18 @@ const Login = () => {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(firebaseAuth, provider);
+      let result;
+      try {
+        result = await signInWithPopup(firebaseAuth, provider);
+      } catch (err) {
+        if (err.code === 'auth/popup-blocked' || err.message?.includes('popup-blocked')) {
+          localStorage.setItem('google_login_role', role);
+          await signInWithRedirect(firebaseAuth, provider);
+          return;
+        } else {
+          throw err;
+        }
+      }
       const googleUser = result.user;
       
       const loggedUser = await loginWithGoogle(googleUser, role);
