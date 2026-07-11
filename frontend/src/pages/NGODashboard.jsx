@@ -114,8 +114,8 @@ const NGODashboard = () => {
     if (videoCallJoined && zegoContainerRef.current && user) {
       const initZego = async () => {
         try {
-          const appID = 298725129;
-          const serverSecret = "874527307b7b70bc7664360d2a705910";
+          const appID = Number(import.meta.env.VITE_ZEGO_APP_ID) || 298725129;
+          const serverSecret = import.meta.env.VITE_ZEGO_SERVER_SECRET || "874527307b7b70bc7664360d2a705910";
           const roomID = user.userId;
           const userID = user.userId;
           const userName = user.name || "NGO Representative";
