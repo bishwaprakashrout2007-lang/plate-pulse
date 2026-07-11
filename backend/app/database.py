@@ -56,7 +56,16 @@ class FirestoreCollection:
 
     def _matches(self, doc, query):
         for q_key, q_val in query.items():
-            if isinstance(q_val, dict):
+            if q_key == "$or":
+                # At least one of the sub-queries in $or must match
+                any_match = False
+                for sub_query in q_val:
+                    if self._matches(doc, sub_query):
+                        any_match = True
+                        break
+                if not any_match:
+                    return False
+            elif isinstance(q_val, dict):
                 # Handle operators like $in, $ne, $gte, $lt, $regex
                 if "$in" in q_val:
                     if doc.get(q_key) not in q_val["$in"]:
@@ -202,6 +211,7 @@ class FirestoreCollection:
             
         doc_id = doc["_id"]
         set_fields = update_query.get("$set", {})
+        push_fields = update_query.get("$push", {})
         
         if is_mock or firestore_db is None:
             if self.name in mock_storage:
@@ -209,10 +219,23 @@ class FirestoreCollection:
                     if item.get("_id") == doc_id:
                         for k, v in set_fields.items():
                             mock_storage[self.name][idx][k] = v
+                        for k, v in push_fields.items():
+                            if k not in mock_storage[self.name][idx] or not isinstance(mock_storage[self.name][idx][k], list):
+                                mock_storage[self.name][idx][k] = []
+                            mock_storage[self.name][idx][k].append(v)
                         break
         else:
             doc_ref = firestore_db.collection(self.name).document(doc_id)
-            await asyncio.to_thread(doc_ref.update, set_fields)
+            firestore_updates = {}
+            for k, v in set_fields.items():
+                firestore_updates[k] = v
+            
+            for k, v in push_fields.items():
+                from google.cloud import firestore as gc_firestore
+                firestore_updates[k] = gc_firestore.FieldValue.array_union(v)
+                
+            if firestore_updates:
+                await asyncio.to_thread(doc_ref.update, firestore_updates)
             
         class UpdateResult:
             matched_count = 1

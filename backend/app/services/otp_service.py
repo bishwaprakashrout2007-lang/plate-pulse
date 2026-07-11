@@ -16,9 +16,6 @@ def generate_otp(email: str) -> str:
     return otp
 
 def verify_otp(email: str, otp: str) -> bool:
-    # Developer back-door for testing
-    if otp == "123456":
-        return True
         
     if email not in otp_store:
         return False

@@ -61,10 +61,15 @@ async def register_ngo_profile(
         "rating": 4.8,
         "latitude": lat,
         "longitude": lng,
+        "kycDocs": [],
         "createdAt": datetime.utcnow()
     }
     
     if existing:
+        ngo_data["kycDocs"] = existing.get("kycDocs", [])
+        ngo_data["status"] = existing.get("status", "Pending")
+        if "kycDocUrl" in existing:
+            ngo_data["kycDocUrl"] = existing["kycDocUrl"]
         await db.ngos.update_one({"_id": ngo_id}, {"$set": ngo_data})
     else:
         await db.ngos.insert_one(ngo_data)
@@ -161,7 +166,10 @@ async def upload_kyc_documents(
     ngo_id = user["sub"]
     await db.ngos.update_one(
         {"_id": ngo_id},
-        {"$set": {"kycDocUrl": url, "status": "PendingVerification"}}
+        {
+            "$push": {"kycDocs": {"url": url, "name": file.filename, "uploadedAt": datetime.utcnow()}},
+            "$set": {"kycDocUrl": url, "status": "PendingVerification"}
+        }
     )
     
     return {"message": "Document uploaded successfully", "url": url}
@@ -173,3 +181,64 @@ async def get_video_token(
 ):
     token = generate_zego_token(room_id, user["sub"])
     return {"token": token, "userId": user["sub"], "userName": user["name"]}
+
+@router.post("/verify/notify-video-call")
+async def notify_video_call(
+    user: dict = Depends(get_current_user),
+    db=Depends(get_db)
+):
+    if user.get("role") not in ["NGO", "Admin"]:
+        raise HTTPException(status_code=403, detail="Only NGO accounts can trigger video call notifications.")
+        
+    ngo_id = user["sub"]
+    ngo = await db.ngos.find_one({"_id": ngo_id})
+    if not ngo:
+        raise HTTPException(status_code=404, detail="NGO profile not found.")
+        
+    ngo_name = ngo.get("ngoName", user.get("name", "NGO Representative"))
+    ngo_email = ngo.get("email", user.get("email"))
+    
+    from ..auth import ADMIN_EMAILS
+    from ..services.email_service import send_email
+    
+    subject = f"PlatePulse KYC - Live Video Call Initiated by {ngo_name}"
+    body = f"""Hello,
+
+This is an automated notification from PlatePulse.
+
+The NGO partner '{ngo_name}' has initiated a live video KYC verification call and is waiting in the chamber.
+
+NGO Details:
+- Name: {ngo_name}
+- Email: {ngo_email}
+- Phone: {ngo.get("phone", user.get("phone", "N/A"))}
+- Darpan ID: {ngo.get("darpanId", "N/A")}
+
+Please access the Admin Dashboard to join the video call auditing chamber.
+
+Regards,
+PlatePulse Verification Team
+"""
+
+    admin_success = True
+    for admin_email in ADMIN_EMAILS:
+        sent = send_email(admin_email, subject, body)
+        if not sent:
+            admin_success = False
+            
+    # Send confirmation to NGO email as well
+    ngo_subject = "PlatePulse KYC - Video Call Link & Support Details"
+    ngo_body = f"""Hello,
+
+You have successfully initiated a live video KYC verification call with the PlatePulse Admin Team.
+
+Please keep the call chamber open. An administrator will join your session shortly to verify your Darpan ID credentials.
+
+Your Room ID for the video call is: {ngo_id}
+
+Regards,
+PlatePulse Support Team
+"""
+    send_email(ngo_email, ngo_subject, ngo_body)
+    
+    return {"message": "Notification emails successfully dispatched."}

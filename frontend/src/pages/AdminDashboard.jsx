@@ -322,6 +322,7 @@ const AdminDashboard = () => {
                       <th className="px-6 py-4">NGO Name</th>
                       <th className="px-6 py-4">Darpan ID</th>
                       <th className="px-6 py-4">Contact</th>
+                      <th className="px-6 py-4">KYC Documents</th>
                       <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
@@ -334,6 +335,35 @@ const AdminDashboard = () => {
                         <td className="px-6 py-4 text-xs font-semibold text-zinc-500">
                           <p>{ngo.email}</p>
                           <p>{ngo.phone}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          {ngo.kycDocs && ngo.kycDocs.length > 0 ? (
+                            <div className="flex flex-col gap-1 max-h-24 overflow-y-auto pr-1">
+                              {ngo.kycDocs.map((doc, idx) => (
+                                <a 
+                                  key={idx} 
+                                  href={doc.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline truncate max-w-[150px]"
+                                  title={doc.name}
+                                >
+                                  {doc.name || `Certificate ${idx+1}`}
+                                </a>
+                              ))}
+                            </div>
+                          ) : ngo.kycDocUrl ? (
+                            <a 
+                              href={ngo.kycDocUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
+                            >
+                              View Certificate
+                            </a>
+                          ) : (
+                            <span className="text-xs text-zinc-400 italic font-semibold">No documents</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${
@@ -454,19 +484,50 @@ const AdminDashboard = () => {
           </div>
 
           {/* Quick verification buttons on call footer */}
-          <div className="p-4 bg-zinc-900 border-t border-zinc-800 flex justify-end gap-3">
-            <button
-              onClick={() => handleUpdateStatus(activeKycNgo.id, 'Verified')}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg"
-            >
-              Approve KYC & Verify
-            </button>
-            <button
-              onClick={() => handleUpdateStatus(activeKycNgo.id, 'Rejected')}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg"
-            >
-              Reject KYC Verification
-            </button>
+          <div className="p-4 bg-zinc-900 border-t border-zinc-800 flex justify-between items-center text-white">
+            <div className="flex gap-4 items-center">
+              <span className="text-xs font-bold text-zinc-400 uppercase">Uploaded KYC Docs:</span>
+              <div className="flex gap-2 max-w-lg overflow-x-auto">
+                {activeKycNgo.kycDocs && activeKycNgo.kycDocs.length > 0 ? (
+                  activeKycNgo.kycDocs.map((doc, idx) => (
+                    <a 
+                      key={idx} 
+                      href={doc.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-xs font-bold text-amber-400 hover:underline bg-zinc-800 px-2.5 py-1 rounded whitespace-nowrap"
+                    >
+                      {doc.name || `Doc ${idx+1}`}
+                    </a>
+                  ))
+                ) : activeKycNgo.kycDocUrl ? (
+                  <a 
+                    href={activeKycNgo.kycDocUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-xs font-bold text-amber-400 hover:underline bg-zinc-800 px-2.5 py-1 rounded whitespace-nowrap"
+                  >
+                    View Certificate
+                  </a>
+                ) : (
+                  <span className="text-xs text-zinc-500 italic">None</span>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleUpdateStatus(activeKycNgo.id, 'Verified')}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg"
+              >
+                Approve KYC & Verify
+              </button>
+              <button
+                onClick={() => handleUpdateStatus(activeKycNgo.id, 'Rejected')}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg"
+              >
+                Reject KYC Verification
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -26,24 +26,24 @@
 @layer components {
   /* Glassmorphism Styles - Elevated and Smooth */
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-2xl border border-white/40 shadow-xl shadow-brand-dark/2.5 rounded-3xl transition-all duration-500;
+    @apply bg-white/70 backdrop-blur-2xl border border-white/40 shadow-xl shadow-brand-dark/10 rounded-3xl transition-all duration-500;
   }
   .dark .glass-panel {
-    @apply bg-zinc-900/80 backdrop-blur-2xl border border-zinc-850/80 shadow-2xl shadow-black/40;
+    @apply bg-zinc-900/80 backdrop-blur-2xl border border-zinc-800 shadow-2xl shadow-black/40;
   }
 
   .glass-card {
     @apply bg-white/50 backdrop-blur-xl border border-white/30 hover:border-brand-accent/30 hover:bg-white/80 hover:-translate-y-1 hover:scale-[1.015] transition-all duration-300 rounded-2xl shadow-md hover:shadow-xl hover:shadow-brand-accent/5;
   }
   .dark .glass-card {
-    @apply bg-zinc-900/40 backdrop-blur-xl border border-zinc-850/50 hover:border-brand-accent/20 hover:bg-zinc-900/60 hover:-translate-y-1 hover:scale-[1.015] hover:shadow-brand-accent/5;
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-zinc-800 hover:border-brand-accent/20 hover:bg-zinc-900/60 hover:-translate-y-1 hover:scale-[1.015] hover:shadow-brand-accent/5;
   }
 
   .glass-input {
-    @apply bg-white/30 backdrop-blur-md border border-white/30 rounded-xl px-4 py-2.5 text-brand-dark focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent/40 placeholder-zinc-400 transition-all duration-355;
+    @apply bg-white/30 backdrop-blur-md border border-white/30 rounded-xl px-4 py-2.5 text-brand-dark focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent/40 placeholder-zinc-400 transition-all duration-300;
   }
   .dark .glass-input {
-    @apply bg-zinc-950/30 backdrop-blur-md border border-zinc-850 text-zinc-100 focus:ring-brand-accent/20 focus:border-brand-accent/30 placeholder-zinc-500;
+    @apply bg-zinc-950/30 backdrop-blur-md border border-zinc-800 text-zinc-100 focus:ring-brand-accent/20 focus:border-brand-accent/30 placeholder-zinc-500;
   }
 
   .glass-btn-primary {
@@ -57,7 +57,7 @@
     @apply bg-white/50 hover:bg-white/70 border border-brand-accent/10 hover:border-brand-accent/20 text-brand-dark font-semibold px-5 py-2.5 rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2;
   }
   .dark .glass-btn-secondary {
-    @apply bg-zinc-900/40 hover:bg-zinc-900/60 border border-zinc-850 hover:border-zinc-800 text-zinc-100;
+    @apply bg-zinc-900/40 hover:bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 text-zinc-100;
   }
 }
 

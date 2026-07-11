@@ -89,7 +89,12 @@ const NGODashboard = () => {
   };
 
   // ZegoCloud Video Call Integration
-  const joinVideoCall = () => {
+  const joinVideoCall = async () => {
+    try {
+      await api.post('/ngos/verify/notify-video-call');
+    } catch (err) {
+      console.error("Failed to trigger video conference notification email:", err);
+    }
     setVideoCallJoined(true);
   };
 
@@ -264,24 +269,53 @@ const NGODashboard = () => {
                   Upload Darpan Registration and Tax certificates (Supported: PDF, JPG, PNG).
                 </p>
 
-                {ngoDetails?.kycDocUrl ? (
-                  <div className="flex items-center gap-1.5 p-3 bg-emerald-500/15 border border-emerald-500/20 text-emerald-600 rounded-lg text-xs font-bold">
-                    <Check className="w-4 h-4" />
-                    <span>Documents uploaded successfully.</span>
+                {ngoDetails?.kycDocs && ngoDetails.kycDocs.length > 0 ? (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase">Uploaded Files:</span>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                      {ngoDetails.kycDocs.map((doc, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-white/40 border border-white/10 rounded-lg text-xs font-semibold">
+                          <span className="truncate max-w-[150px]" title={doc.name}>{doc.name || `Certificate ${idx+1}`}</span>
+                          <a 
+                            href={doc.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-amber-600 hover:underline"
+                          >
+                            View
+                          </a>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <form onSubmit={handleDocUpload} className="space-y-3">
-                    <input 
-                      type="file" 
-                      required
-                      onChange={(e) => setKycFile(e.target.files[0])}
-                      className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-600 hover:file:bg-amber-500/20 cursor-pointer"
-                    />
-                    <button type="submit" disabled={loading} className="glass-btn-primary w-full py-2 text-xs font-bold">
-                      {loading ? 'Uploading...' : 'Upload Certificates'}
-                    </button>
-                  </form>
-                )}
+                ) : ngoDetails?.kycDocUrl ? (
+                  <div className="flex items-center justify-between p-2 bg-white/40 border border-white/10 rounded-lg text-xs font-semibold">
+                    <span>KYC Document Certificate</span>
+                    <a 
+                      href={ngoDetails.kycDocUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-amber-600 hover:underline"
+                    >
+                      View
+                    </a>
+                  </div>
+                ) : null}
+
+                <form onSubmit={handleDocUpload} className="space-y-3 pt-2 border-t border-white/10">
+                  <label className="block text-[10px] font-extrabold text-zinc-400 uppercase">
+                    Upload {ngoDetails?.kycDocs?.length > 0 || ngoDetails?.kycDocUrl ? 'Another' : ''} Document:
+                  </label>
+                  <input 
+                    type="file" 
+                    required
+                    onChange={(e) => setKycFile(e.target.files[0])}
+                    className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-600 hover:file:bg-amber-500/20 cursor-pointer"
+                  />
+                  <button type="submit" disabled={loading} className="glass-btn-primary w-full py-2 text-xs font-bold">
+                    {loading ? 'Uploading...' : (ngoDetails?.kycDocs?.length > 0 || ngoDetails?.kycDocUrl ? 'Upload Additional Doc' : 'Upload Certificates')}
+                  </button>
+                </form>
               </div>
 
               {/* Step 2: Live Video Verification */}

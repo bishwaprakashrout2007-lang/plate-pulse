@@ -277,7 +277,7 @@ const Login = () => {
               {otpSent && (
                 <div className="glass-card p-4 space-y-3">
                   <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-                    We've emailed a 6-digit OTP code. Enter it below (developer bypass: 123456).
+                    We've emailed a 6-digit OTP code. Enter it below to verify your email.
                   </p>
                   <div className="flex gap-2">
                     <input

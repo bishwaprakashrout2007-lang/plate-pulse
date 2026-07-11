@@ -578,6 +578,22 @@ const ClientDashboard = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">Target NGO Partner</label>
+                <select
+                  value={formNgoId}
+                  onChange={(e) => setFormNgoId(e.target.value)}
+                  className="glass-input w-full text-xs cursor-pointer bg-white text-zinc-850 font-semibold"
+                >
+                  <option value="" className="text-zinc-500 font-semibold">Any NGO Partner (Public Request)</option>
+                  {ngos.map(ngo => (
+                    <option key={ngo.id} value={ngo.id} className="text-zinc-800 font-semibold">
+                      {ngo.ngoName} ({ngo.address})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Checkboxes: What to Donate */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">What to Donate</label>
