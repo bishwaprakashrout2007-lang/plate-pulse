@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Heart, User, Mail, Phone, Lock, Eye, EyeOff, Sparkles, Building, Landmark, Image, AlertTriangle } from 'lucide-react';
+import { Heart, User, Mail, Phone, Lock, Eye, EyeOff, Sparkles, Building, Landmark, Image, AlertTriangle, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth as firebaseAuth } from '../firebase';
+import api from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,11 +35,36 @@ const Login = () => {
   const [address, setAddress] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [description, setDescription] = useState('');
-
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  
   // OTP Verification state
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploadingPhoto(true);
+    setError('');
+    try {
+      const res = await api.post('/public/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setPhotoUrl(res.data.url);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.detail || 'Failed to upload photo.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -166,8 +192,15 @@ const Login = () => {
     }
   };
 
+  const getBgClass = () => {
+    if (isLogin) return '';
+    if (role === 'NGO') return 'bg-ngo-dashboard';
+    if (role === 'Client') return 'bg-client-dashboard';
+    return '';
+  };
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className={`flex flex-col min-h-screen ${getBgClass()}`}>
       <Navbar />
 
       <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -434,17 +467,40 @@ const Login = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">NGO Profile Photo Url (Cloudinary / Link)</label>
-                    <div className="relative">
-                      <Image className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
-                      <input
-                        type="text"
-                        placeholder="Leave blank for auto-placeholder"
-                        value={photoUrl}
-                        onChange={(e) => setPhotoUrl(e.target.value)}
-                        className="glass-input w-full pl-9 text-xs"
-                      />
-                    </div>
+                    <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">NGO Profile Photo</label>
+                    
+                    {!photoUrl ? (
+                      <div className="relative">
+                        <label className="flex flex-col items-center justify-center border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-4 bg-white/20 hover:bg-white/40 transition-all cursor-pointer">
+                          <Image className="w-6 h-6 text-zinc-400" />
+                          <span className="text-[10px] font-bold text-zinc-500 mt-1">
+                            {uploadingPhoto ? 'Uploading photo...' : 'Click to Upload Profile Photo'}
+                          </span>
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={handlePhotoUpload}
+                            disabled={uploadingPhoto}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="relative rounded-xl overflow-hidden border border-zinc-250 dark:border-zinc-800">
+                        <img src={photoUrl} alt="NGO profile" className="w-full h-36 object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setPhotoUrl('')}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all shadow-md z-10"
+                          title="Delete photo"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <div className="absolute bottom-0 inset-x-0 bg-black/60 px-3 py-1 flex items-center justify-between">
+                          <span className="text-[10px] text-emerald-400 font-bold">✓ Uploaded successfully</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

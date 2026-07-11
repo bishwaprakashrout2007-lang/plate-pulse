@@ -6,6 +6,7 @@
 
 @layer base {
   body {
+    --bg-overlay: rgba(250, 249, 246, 0.94);
     @apply bg-brand-yellow text-brand-dark font-sans transition-colors duration-500 min-h-screen selection:bg-brand-accent/20 overflow-x-hidden;
     background-image: radial-gradient(at 0% 0%, rgba(255, 95, 56, 0.04) 0px, transparent 50%),
                       radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.04) 0px, transparent 50%),
@@ -14,6 +15,7 @@
   
   /* Dark mode overrides */
   body.dark {
+    --bg-overlay: rgba(8, 10, 16, 0.95);
     @apply bg-brand-dark text-zinc-100;
     background-image: radial-gradient(at 0% 0%, rgba(255, 95, 56, 0.06) 0px, transparent 50%),
                       radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.04) 0px, transparent 50%),
@@ -83,4 +85,29 @@
 }
 .dark .leaflet-container {
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* Dashboard Role-Specific Thematic Watermark Backgrounds */
+.bg-admin-dashboard {
+  background-image: linear-gradient(to bottom, var(--bg-overlay), var(--bg-overlay)), 
+                    url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1600');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.bg-ngo-dashboard {
+  background-image: linear-gradient(to bottom, var(--bg-overlay), var(--bg-overlay)), 
+                    url('https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=1600');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.bg-client-dashboard {
+  background-image: linear-gradient(to bottom, var(--bg-overlay), var(--bg-overlay)), 
+                    url('https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1600');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }

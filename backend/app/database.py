@@ -286,6 +286,12 @@ def init_firebase():
             cred = credentials.Certificate(settings.FIREBASE_SERVICE_ACCOUNT_JSON)
             logger.info(f"Initializing Firebase with service account file: {settings.FIREBASE_SERVICE_ACCOUNT_JSON}")
         else:
+            import os
+            # If no emulator host is configured and no credentials, force mock db!
+            if not os.environ.get("FIRESTORE_EMULATOR_HOST"):
+                logger.warning("No Firebase credentials provided and no Firestore Emulator detected. Forcing mock database fallback to prevent hangs.")
+                is_mock = True
+                return False
             logger.info("No explicit Firebase credentials found. Attempting Application Default Credentials or Project ID...")
             
         if cred:
@@ -314,13 +320,21 @@ async def verify_db_connection():
         if firestore_db is None:
             init_firebase()
             
-        if firestore_db is not None:
-            # Try a quick call to check connection
-            await asyncio.to_thread(lambda: list(firestore_db.collections()))
-            logger.info("Firebase Firestore connection verified successfully.")
-            return True
+        if firestore_db is not None and not is_mock:
+            # Try a quick call to check connection with a timeout to prevent hanging!
+            async def run_check():
+                return await asyncio.to_thread(lambda: list(firestore_db.collections()))
+            
+            try:
+                await asyncio.wait_for(run_check(), timeout=3.0)
+                logger.info("Firebase Firestore connection verified successfully.")
+                return True
+            except asyncio.TimeoutError:
+                logger.warning("Firebase Firestore connection check timed out after 3 seconds. Switching to in-memory mock database.")
+                is_mock = True
+                return False
         else:
-            raise Exception("Firestore client is None")
+            raise Exception("Firestore client is None or mocked")
     except Exception as e:
         logger.warning(f"Firebase Firestore connection failed: {e}. Switching to in-memory mock database.")
         is_mock = True

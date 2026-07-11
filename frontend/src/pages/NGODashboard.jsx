@@ -239,7 +239,7 @@ const NGODashboard = () => {
   // 1. UNVERIFIED OR PENDING VERIFICATION NGO INTERFACE
   if (user && (user.status === 'Unverified' || user.status === 'Pending' || user.status === 'PendingVerification')) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen bg-ngo-dashboard">
         <Navbar />
         
         <main className="flex-grow max-w-4xl mx-auto px-4 py-12 w-full">
@@ -327,7 +327,7 @@ const NGODashboard = () => {
 
   // 2. VERIFIED NGO DASHBOARD INTERFACE
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-ngo-dashboard">
       <Navbar />
 
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
@@ -602,9 +602,19 @@ const NGODashboard = () => {
                       </div>
                       
                       {receiptPhotoUrl && (
-                        <div className="mt-3">
-                          <img src={receiptPhotoUrl} alt="Confirm upload" className="w-full h-32 object-cover rounded-lg border border-emerald-500/20" />
-                          <span className="text-[10px] font-bold text-emerald-600 mt-1 block">✓ Image compressed and uploaded successfully</span>
+                        <div className="mt-3 relative rounded-lg overflow-hidden border border-emerald-500/20">
+                          <img src={receiptPhotoUrl} alt="Confirm upload" className="w-full h-32 object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setReceiptPhotoUrl('')}
+                            className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all shadow-md z-10"
+                            title="Delete snap"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                          <div className="absolute bottom-0 inset-x-0 bg-black/60 px-3 py-1 flex items-center justify-between">
+                            <span className="text-[10px] text-emerald-400 font-bold">✓ Uploaded successfully</span>
+                          </div>
                         </div>
                       )}
                     </div>

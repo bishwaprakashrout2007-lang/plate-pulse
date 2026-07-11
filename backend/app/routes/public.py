@@ -187,8 +187,7 @@ async def submit_feedback(
 # Helper upload routes
 @router.post("/upload")
 async def public_upload(
-    file: UploadFile = File(...),
-    user: dict = Depends(get_current_user)
+    file: UploadFile = File(...)
 ):
     url = await upload_image(file, folder="public_uploads")
     return {"url": url}
