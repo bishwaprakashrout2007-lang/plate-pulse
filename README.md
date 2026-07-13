@@ -19,6 +19,7 @@
 - **KYC Document & Video Verification**: Upload Darpan/Tax certificates and participate in live 1-to-1 video verification calls with Admin auditors.
 - **Proof of Handover**: Upload photos of food handovers directly to the platform with compression and clear/delete (cross-mark) utility.
 
+
 ### 3. Administrators
 - **Verification Chamber**: Review pending NGO applications, cross-examine uploaded certificates, and conduct live 1-to-1 video KYC audits.
 - **Oversight Dashboard**: Track platform metrics including registered NGOs, total donors, active listings, and completed food deliveries.
