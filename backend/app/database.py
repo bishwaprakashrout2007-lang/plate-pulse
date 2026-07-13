@@ -146,14 +146,23 @@ class FirestoreCollection:
                 mock_storage[self.name] = []
             return [dict(doc) for doc in mock_storage[self.name]]
 
-        col_ref = firestore_db.collection(self.name)
-        docs_stream = await asyncio.to_thread(col_ref.stream)
-        results = []
-        for doc in docs_stream:
-            d = doc.to_dict()
-            d["_id"] = doc.id
-            results.append(self._clean_doc(d))
-        return results
+        try:
+            col_ref = firestore_db.collection(self.name)
+            docs_stream = await asyncio.to_thread(col_ref.stream)
+            results = []
+            for doc in docs_stream:
+                d = doc.to_dict()
+                d["_id"] = doc.id
+                results.append(self._clean_doc(d))
+            return results
+        except Exception as e:
+            if "quota" in str(e).lower() or "exhausted" in str(e).lower() or "limit" in str(e).lower() or "429" in str(e):
+                logger.error(f"Firestore daily quota exceeded! Falling back to mock database: {e}")
+                is_mock = True
+                if self.name not in mock_storage:
+                    mock_storage[self.name] = []
+                return [dict(doc) for doc in mock_storage[self.name]]
+            raise e
 
     async def insert_one(self, document):
         global is_mock
@@ -166,8 +175,18 @@ class FirestoreCollection:
                 mock_storage[self.name] = []
             mock_storage[self.name].append(doc_copy)
         else:
-            doc_ref = firestore_db.collection(self.name).document(doc_id)
-            await asyncio.to_thread(doc_ref.set, doc_copy)
+            try:
+                doc_ref = firestore_db.collection(self.name).document(doc_id)
+                await asyncio.to_thread(doc_ref.set, doc_copy)
+            except Exception as e:
+                if "quota" in str(e).lower() or "exhausted" in str(e).lower() or "limit" in str(e).lower() or "429" in str(e):
+                    logger.error(f"Firestore daily quota exceeded during insert! Falling back to mock database: {e}")
+                    is_mock = True
+                    if self.name not in mock_storage:
+                        mock_storage[self.name] = []
+                    mock_storage[self.name].append(doc_copy)
+                else:
+                    raise e
             
         class InsertResult:
             inserted_id = doc_id
@@ -179,21 +198,29 @@ class FirestoreCollection:
         if len(query) == 1 and "_id" in query and isinstance(query["_id"], str):
             doc_id = query["_id"]
             if not is_mock and firestore_db is not None:
-                doc_ref = firestore_db.collection(self.name).document(doc_id)
-                doc = await asyncio.to_thread(doc_ref.get)
-                if doc.exists:
-                    d = doc.to_dict()
-                    d["_id"] = doc.id
-                    return self._clean_doc(d)
-                return None
-            else:
-                # Mock storage
-                if self.name not in mock_storage:
-                    mock_storage[self.name] = []
-                for doc in mock_storage[self.name]:
-                    if doc.get("_id") == doc_id:
-                        return dict(doc)
-                return None
+                try:
+                    doc_ref = firestore_db.collection(self.name).document(doc_id)
+                    doc = await asyncio.to_thread(doc_ref.get)
+                    if doc.exists:
+                        d = doc.to_dict()
+                        d["_id"] = doc.id
+                        return self._clean_doc(d)
+                    return None
+                except Exception as e:
+                    if "quota" in str(e).lower() or "exhausted" in str(e).lower() or "limit" in str(e).lower() or "429" in str(e):
+                        logger.error(f"Firestore daily quota exceeded during direct lookup! Falling back to mock database: {e}")
+                        is_mock = True
+                        # Fallback to mock search below
+                    else:
+                        raise e
+            
+            # Mock storage lookup
+            if self.name not in mock_storage:
+                mock_storage[self.name] = []
+            for doc in mock_storage[self.name]:
+                if doc.get("_id") == doc_id:
+                    return dict(doc)
+            return None
                 
         # Stream & match
         docs = await self._get_all_docs()
@@ -219,29 +246,41 @@ class FirestoreCollection:
         set_fields = update_query.get("$set", {})
         push_fields = update_query.get("$push", {})
         
+        def perform_mock_update():
+            if self.name not in mock_storage:
+                mock_storage[self.name] = []
+            for idx, item in enumerate(mock_storage[self.name]):
+                if item.get("_id") == doc_id:
+                    for k, v in set_fields.items():
+                        mock_storage[self.name][idx][k] = v
+                    for k, v in push_fields.items():
+                        if k not in mock_storage[self.name][idx] or not isinstance(mock_storage[self.name][idx][k], list):
+                            mock_storage[self.name][idx][k] = []
+                        mock_storage[self.name][idx][k].append(v)
+                    break
+        
         if is_mock or firestore_db is None:
-            if self.name in mock_storage:
-                for idx, item in enumerate(mock_storage[self.name]):
-                    if item.get("_id") == doc_id:
-                        for k, v in set_fields.items():
-                            mock_storage[self.name][idx][k] = v
-                        for k, v in push_fields.items():
-                            if k not in mock_storage[self.name][idx] or not isinstance(mock_storage[self.name][idx][k], list):
-                                mock_storage[self.name][idx][k] = []
-                            mock_storage[self.name][idx][k].append(v)
-                        break
+            perform_mock_update()
         else:
-            doc_ref = firestore_db.collection(self.name).document(doc_id)
-            firestore_updates = {}
-            for k, v in set_fields.items():
-                firestore_updates[k] = v
-            
-            for k, v in push_fields.items():
-                from google.cloud.firestore import ArrayUnion
-                firestore_updates[k] = ArrayUnion([v])
+            try:
+                doc_ref = firestore_db.collection(self.name).document(doc_id)
+                firestore_updates = {}
+                for k, v in set_fields.items():
+                    firestore_updates[k] = v
                 
-            if firestore_updates:
-                await asyncio.to_thread(doc_ref.update, firestore_updates)
+                for k, v in push_fields.items():
+                    from google.cloud.firestore import ArrayUnion
+                    firestore_updates[k] = ArrayUnion([v])
+                    
+                if firestore_updates:
+                    await asyncio.to_thread(doc_ref.update, firestore_updates)
+            except Exception as e:
+                if "quota" in str(e).lower() or "exhausted" in str(e).lower() or "limit" in str(e).lower() or "429" in str(e):
+                    logger.error(f"Firestore daily quota exceeded during update! Falling back to mock database: {e}")
+                    is_mock = True
+                    perform_mock_update()
+                else:
+                    raise e
             
         class UpdateResult:
             matched_count = 1
@@ -257,15 +296,27 @@ class FirestoreCollection:
             return DeleteResult()
             
         doc_id = doc["_id"]
-        if is_mock or firestore_db is None:
+        
+        def perform_mock_delete():
             if self.name in mock_storage:
                 for idx, item in enumerate(mock_storage[self.name]):
                     if item.get("_id") == doc_id:
                         mock_storage[self.name].pop(idx)
                         break
+                        
+        if is_mock or firestore_db is None:
+            perform_mock_delete()
         else:
-            doc_ref = firestore_db.collection(self.name).document(doc_id)
-            await asyncio.to_thread(doc_ref.delete)
+            try:
+                doc_ref = firestore_db.collection(self.name).document(doc_id)
+                await asyncio.to_thread(doc_ref.delete)
+            except Exception as e:
+                if "quota" in str(e).lower() or "exhausted" in str(e).lower() or "limit" in str(e).lower() or "429" in str(e):
+                    logger.error(f"Firestore daily quota exceeded during delete! Falling back to mock database: {e}")
+                    is_mock = True
+                    perform_mock_delete()
+                else:
+                    raise e
             
         class DeleteResult:
             deleted_count = 1
