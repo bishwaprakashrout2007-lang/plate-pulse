@@ -2,11 +2,44 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import logging
+import httpx
 from ..config import settings
 
 logger = logging.getLogger("platepulse.email")
 
 def send_email(to_email: str, subject: str, body_text: str, body_html: str = None) -> tuple:
+    # Check if Brevo HTTP API is configured (highly recommended for Render Free Tier to bypass SMTP block)
+    if settings.BREVO_API_KEY and settings.BREVO_API_KEY.strip() != "":
+        try:
+            url = "https://api.brevo.com/v3/smtp/email"
+            headers = {
+                "accept": "application/json",
+                "api-key": settings.BREVO_API_KEY,
+                "content-type": "application/json"
+            }
+            from_addr = settings.SMTP_FROM
+            if not from_addr or from_addr == "noreply@platepulse.org":
+                from_addr = settings.SMTP_USER or "ardiliumplatform@gmail.com"
+                
+            payload = {
+                "sender": {"name": "PlatePulse", "email": from_addr},
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "htmlContent": body_html or f"<p>{body_text}</p>",
+                "textContent": body_text
+            }
+            with httpx.Client() as client:
+                response = client.post(url, json=payload, headers=headers, timeout=10.0)
+                if response.status_code in [200, 201, 202]:
+                    logger.info(f"Email successfully sent to {to_email} via Brevo HTTP API")
+                    return True, ""
+                else:
+                    logger.error(f"Brevo API error: {response.text}")
+                    return False, f"Brevo HTTP API error: {response.text}"
+        except Exception as e:
+            logger.error(f"Failed to send email via Brevo HTTP API: {e}")
+            return False, f"Brevo HTTP API error: {e}"
+
     # Fallback to logger if SMTP configuration is empty or dummy
     is_mock = (
         not settings.SMTP_USER 

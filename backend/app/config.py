@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "noreply@platepulse.org"
     
+    # Brevo HTTP Email API (to bypass Render Free tier SMTP block)
+    BREVO_API_KEY: str = ""
+    
     # Cloudinary Integration
     CLOUDINARY_CLOUD_NAME: str = "dummy"
     CLOUDINARY_API_KEY: str = ""
