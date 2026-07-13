@@ -29,6 +29,9 @@ class NGOProfileCreate(BaseModel):
     address: str
     photoUrl: str
     description: str
+    pincode: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class NGOResponse(NGOProfileCreate):
     id: str = Field(..., alias="_id")

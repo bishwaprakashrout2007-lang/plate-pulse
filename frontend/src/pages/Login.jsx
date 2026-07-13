@@ -33,6 +33,10 @@ const Login = () => {
   const [bankAccount, setBankAccount] = useState('');
   const [ifsc, setIfsc] = useState('');
   const [address, setAddress] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [locating, setLocating] = useState(false);
   const [photoUrl, setPhotoUrl] = useState('');
   const [description, setDescription] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -183,6 +187,56 @@ const Login = () => {
     }
   };
 
+  const handlePincodeChange = async (e) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setPincode(val);
+    if (val.length === 6) {
+      setLocating(true);
+      setError('');
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${val}&country=India&format=json`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            const loc = data[0];
+            setLatitude(parseFloat(loc.lat));
+            setLongitude(parseFloat(loc.lon));
+            setAddress(loc.display_name);
+            setLocating(false);
+            return;
+          }
+        }
+        
+        const zipResponse = await fetch(`https://api.zippopotam.us/IN/${val}`);
+        if (zipResponse.ok) {
+          const zipData = await zipResponse.json();
+          if (zipData.places && zipData.places.length > 0) {
+            const place = zipData.places[0];
+            const lat = parseFloat(place.latitude);
+            const lng = parseFloat(place.longitude);
+            const addr = `${place['place name']}, ${zipData['state']}, India (PIN: ${val})`;
+            setLatitude(lat);
+            setLongitude(lng);
+            setAddress(addr);
+          } else {
+            setError('PIN Code not found. Please try again.');
+          }
+        } else {
+          setError('PIN Code lookup failed. Please enter a valid Indian PIN Code.');
+        }
+      } catch (err) {
+        console.error('Error fetching location:', err);
+        setError('Location service offline. Please try again.');
+      } finally {
+        setLocating(false);
+      }
+    } else {
+      setAddress('');
+      setLatitude(null);
+      setLongitude(null);
+    }
+  };
+
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -218,7 +272,6 @@ const Login = () => {
         
         // Step 2: If role is NGO, submit NGO specific details
         if (role === 'NGO') {
-          // Provide default placeholder if photoUrl is empty
           const imgUrl = photoUrl || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400";
           await registerNgoProfile({
             ngoName,
@@ -227,7 +280,10 @@ const Login = () => {
             ifsc,
             address,
             photoUrl: imgUrl,
-            description
+            description,
+            pincode,
+            latitude,
+            longitude
           });
           // Redirect to KYC Document upload / video call page
           navigate('/ngo/verify');
@@ -505,16 +561,32 @@ const Login = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">NGO Address</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Physical Office Address"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="glass-input w-full"
-                    />
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">PIN Code</label>
+                      <input
+                        type="text"
+                        required
+                        maxLength={6}
+                        placeholder="PIN Code"
+                        value={pincode}
+                        onChange={handlePincodeChange}
+                        className="glass-input w-full text-xs"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">
+                        NGO Address {locating && <span className="text-amber-500 animate-pulse font-normal">(Locating...)</span>}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        readOnly
+                        placeholder="Auto-filled via PIN Code"
+                        value={address}
+                        className="glass-input w-full text-xs bg-white/20 text-zinc-700 dark:text-zinc-200 font-semibold cursor-not-allowed"
+                      />
+                    </div>
                   </div>
 
                   <div>

@@ -37,6 +37,8 @@ const ClientDashboard = () => {
   const [moneyType, setMoneyType] = useState('Online'); // 'Online' / 'Offline'
   const [successMsg, setSuccessMsg] = useState('');
   const [formError, setFormError] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [locating, setLocating] = useState(false);
 
   // Fetch location on mount
   useEffect(() => {
@@ -136,6 +138,7 @@ const ClientDashboard = () => {
       setDetails('');
       setQuantity('');
       setAddress('');
+      setPincode('');
       setDate('');
       setInstructions('');
       setFormNgoId('');
@@ -152,6 +155,48 @@ const ClientDashboard = () => {
       setFormError(err.response?.data?.detail || 'Failed to submit request.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePincodeChange = async (e) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setPincode(val);
+    if (val.length === 6) {
+      setLocating(true);
+      setFormError('');
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${val}&country=India&format=json`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            const loc = data[0];
+            setAddress(loc.display_name);
+            setLocating(false);
+            return;
+          }
+        }
+        
+        const zipResponse = await fetch(`https://api.zippopotam.us/IN/${val}`);
+        if (zipResponse.ok) {
+          const zipData = await zipResponse.json();
+          if (zipData.places && zipData.places.length > 0) {
+            const place = zipData.places[0];
+            const addr = `${place['place name']}, ${zipData['state']}, India (PIN: ${val})`;
+            setAddress(addr);
+          } else {
+            setFormError('PIN Code not found. Please try again.');
+          }
+        } else {
+          setFormError('PIN Code lookup failed. Please enter a valid Indian PIN Code.');
+        }
+      } catch (err) {
+        console.error('Error fetching location:', err);
+        setFormError('Location service offline. Please try again.');
+      } finally {
+        setLocating(false);
+      }
+    } else {
+      setAddress('');
     }
   };
 
@@ -732,16 +777,32 @@ const ClientDashboard = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">Pickup Address</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Street details and landmark"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="glass-input w-full text-xs"
-                />
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">PIN Code</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    placeholder="PIN Code"
+                    value={pincode}
+                    onChange={handlePincodeChange}
+                    className="glass-input w-full text-xs"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">
+                    Pickup Address {locating && <span className="text-amber-500 animate-pulse font-normal">(Locating...)</span>}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    readOnly
+                    placeholder="Auto-filled via PIN Code"
+                    value={address}
+                    className="glass-input w-full text-xs bg-white/20 text-zinc-700 dark:text-zinc-200 font-semibold cursor-not-allowed"
+                  />
+                </div>
               </div>
 
               <div>

@@ -40,10 +40,9 @@ async def register_ngo_profile(
     # Check if NGO profile already exists
     existing = await db.ngos.find_one({"_id": ngo_id})
     
-    # Pre-generate coordinates near center of Bhubaneswar or User coordinates if not specified
-    # Using small random offset so they distribute naturally around user
-    lat = 20.2961 + random.uniform(-0.15, 0.15)
-    lng = 85.8245 + random.uniform(-0.15, 0.15)
+    # Use coordinates passed from frontend if available, else fall back to default coordinates
+    lat = profile.latitude if profile.latitude is not None else (20.2961 + random.uniform(-0.05, 0.05))
+    lng = profile.longitude if profile.longitude is not None else (85.8245 + random.uniform(-0.05, 0.05))
     
     ngo_data = {
         "_id": ngo_id,
@@ -61,6 +60,7 @@ async def register_ngo_profile(
         "rating": 4.8,
         "latitude": lat,
         "longitude": lng,
+        "pincode": profile.pincode,
         "kycDocs": [],
         "createdAt": datetime.utcnow()
     }
