@@ -25,8 +25,7 @@ async def send_otp_endpoint(req: OTPRequest):
     # Send email asynchronously or synchronously (synchronous fallback)
     sent, error_detail = send_otp_email(email, otp)
     if not sent:
-        logger.warning(f"Failed to send email to {email}: {error_detail}. Falling back to master code 123456.")
-        return {"message": "OTP generated. (SMTP block detected: please use bypass code 123456)", "email": email}
+        raise HTTPException(status_code=500, detail=f"Failed to send OTP. Please check SMTP settings. Error: {error_detail}")
         
     return {"message": "OTP sent successfully to email", "email": email}
 
