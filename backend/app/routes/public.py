@@ -293,11 +293,13 @@ async def track_visitor_visit(req: VisitTrack, db=Depends(get_db)):
     
     existing = await db.visitors.find_one({"_id": device_id})
     if existing:
+        visit_count = existing.get("visitCount", 1) + 1
         await db.visitors.update_one(
             {"_id": device_id},
             {
                 "$set": {
                     "deviceType": device_type,
+                    "visitCount": visit_count,
                     "lastVisitedAt": datetime.utcnow()
                 }
             }
@@ -306,6 +308,7 @@ async def track_visitor_visit(req: VisitTrack, db=Depends(get_db)):
         await db.visitors.insert_one({
             "_id": device_id,
             "deviceType": device_type,
+            "visitCount": 1,
             "lastVisitedAt": datetime.utcnow()
         })
     return {"status": "success"}

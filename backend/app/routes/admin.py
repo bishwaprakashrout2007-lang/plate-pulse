@@ -39,12 +39,18 @@ async def get_admin_dashboard_stats(db=Depends(get_db)):
         chart_data.append({"day": day_str, "donations": count})
         
     total_visitors = await db.visitors.count_documents({})
+    # Retrieve all visitor documents to sum visitCount (total link opens)
+    cursor = db.visitors.find({})
+    all_visitors = await cursor.to_list(length=1000)
+    total_link_opens = sum(v.get("visitCount", 1) for v in all_visitors)
+    
     desktop_visitors = await db.visitors.count_documents({"deviceType": "Desktop"})
     mobile_visitors = await db.visitors.count_documents({"deviceType": "Mobile"})
     tablet_visitors = await db.visitors.count_documents({"deviceType": "Tablet"})
     
     if total_visitors == 0:
         total_visitors = 1
+        total_link_opens = 1
         desktop_visitors = 1
         
     return {
@@ -55,6 +61,7 @@ async def get_admin_dashboard_stats(db=Depends(get_db)):
         "chartData": chart_data,
         "visitors": {
             "total": total_visitors,
+            "opens": total_link_opens,
             "desktop": desktop_visitors,
             "mobile": mobile_visitors,
             "tablet": tablet_visitors

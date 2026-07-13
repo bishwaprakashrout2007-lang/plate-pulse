@@ -662,8 +662,10 @@ const AdminDashboard = () => {
           {showVisitorPopover && (
             <div className="absolute bottom-14 right-0 w-64 glass-panel border border-white/20 bg-zinc-950/95 text-white p-4 rounded-2xl shadow-xl space-y-3 transition-all duration-300">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                <span className="text-[10px] font-bold font-sans tracking-wide text-zinc-400">DEVICE ANALYTICS</span>
-                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-amber-500 text-brand-dark rounded">Unique Devices</span>
+                <span className="text-[10px] font-bold font-sans tracking-wide text-zinc-400">UNIQUE VISITOR DEVICES</span>
+                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-emerald-500 text-white rounded">
+                  Devices: {stats?.visitors?.total || 1}
+                </span>
               </div>
               
               <div className="space-y-2 text-xs">
@@ -682,7 +684,7 @@ const AdminDashboard = () => {
               </div>
               
               <div className="text-[9px] text-zinc-500 border-t border-white/10 pt-2 text-center">
-                Tracks unique devices opening the site
+                Total unique devices that opened PlatePulse
               </div>
             </div>
           )}
@@ -692,7 +694,7 @@ const AdminDashboard = () => {
             className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-brand-dark font-extrabold text-xs rounded-full shadow-lg hover:shadow-xl transition-all border border-amber-600/20 active:scale-95"
           >
             <span>👥</span>
-            <span>Visitors: {stats?.visitors?.total || 1}</span>
+            <span>Total Link Opens: {stats?.visitors?.opens || 1}</span>
           </button>
         </div>
       </div>
