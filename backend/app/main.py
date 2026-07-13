@@ -21,6 +21,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "https://plate-pulsee.vercel.app",
+        "https://plate-pulse-three.vercel.app",
     ],
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|.*\.vercel\.app)(:\d+)?",
     allow_credentials=True,
