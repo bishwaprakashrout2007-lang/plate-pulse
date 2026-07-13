@@ -11,7 +11,10 @@ logger = logging.getLogger("platepulse.cloudinary")
 
 # Set up local upload path
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static", "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except Exception as e:
+    logger.warning(f"Could not create local upload directory (normal on read-only serverless filesystems): {e}")
 
 # Initialize Cloudinary if credentials are provided
 cloudinary_configured = False

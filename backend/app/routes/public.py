@@ -4,8 +4,9 @@ import uuid
 from typing import List
 from ..database import get_db
 from ..models.schemas import BlogCreate, BlogResponse, FeedbackCreate, FeedbackResponse, GalleryCreate, GalleryResponse
-from ..auth import get_current_user, RoleChecker
+from ..auth import get_current_user, RoleChecker, ADMIN_EMAILS
 from ..services.cloudinary_service import upload_image
+from ..services.email_service import send_email
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
@@ -182,6 +183,93 @@ async def submit_feedback(
         "createdAt": datetime.utcnow()
     }
     await db.feedback.insert_one(doc)
+    
+    # Send email notification to admins
+    for admin_email in ADMIN_EMAILS:
+        subject = f"PlatePulse – New Feedback/Contact Message from {req.userName}"
+        body_text = f"""Hello Admin,
+
+You have received a new contact/feedback message on PlatePulse.
+
+Details:
+Name: {req.userName}
+Email: {req.email}
+Rating: {req.rating}/5
+Message: {req.message}
+
+Please log in to the dashboard to review and manage user submissions.
+
+Regards,
+PlatePulse Team
+"""
+        body_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>New Feedback Message</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%);padding:36px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">🍽️ PlatePulse</h1>
+              <p style="margin:6px 0 0;color:#bbf7d0;font-size:13px;">Connecting Food. Changing Lives.</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 40px 20px;">
+              <h2 style="margin:0 0 10px;color:#1a1a1a;font-size:20px;font-weight:600;">New Support / Feedback Message</h2>
+              <p style="margin:0 0 24px;color:#555;font-size:14px;line-height:1.7;">
+                A visitor has submitted a message via the Contact page.
+              </p>
+
+              <!-- Feedback details card -->
+              <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:24px;margin-bottom:28px;">
+                <p style="margin:0 0 8px;color:#666;font-size:13px;"><strong>Name:</strong> {req.userName}</p>
+                <p style="margin:0 0 8px;color:#666;font-size:13px;"><strong>Email:</strong> <a href="mailto:{req.email}" style="color:#16a34a;text-decoration:none;">{req.email}</a></p>
+                <p style="margin:0 0 12px;color:#666;font-size:13px;"><strong>Rating:</strong> {"⭐" * req.rating} ({req.rating}/5)</p>
+                <hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0;" />
+                <p style="margin:0;color:#333;font-size:14px;line-height:1.6;font-style:italic;">"{req.message}"</p>
+              </div>
+
+              <p style="margin:0;color:#888;font-size:13px;text-align:center;">
+                Please log in to the admin panel to view all submissions.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 40px;">
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:0;" />
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px 36px;text-align:center;">
+              <p style="margin:0;color:#aaa;font-size:12px;line-height:1.6;">
+                &copy; 2026 PlatePulse. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+ </body>
+</html>"""
+        send_email(admin_email, subject, body_text, body_html)
+        
     return doc
 
 # Helper upload routes

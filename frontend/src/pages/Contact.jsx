@@ -1,113 +1,149 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Send, Star, Loader2 } from 'lucide-react';
+import api from '../services/api';
 
 const Contact = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [rating, setRating] = useState(5);
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccess('Thank you! Your message has been sent to our auditing committee. We will respond within 48 hours.');
-    setName('');
-    setEmail('');
-    setMessage('');
-    setTimeout(() => setSuccess(''), 5000);
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      await api.post('/public/feedback', {
+        userName: name,
+        email: email,
+        message: message,
+        rating: rating
+      });
+      setSuccess('Thank you! Your feedback has been sent to our administration team.');
+      setName('');
+      setEmail('');
+      setMessage('');
+      setRating(5);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.detail || 'Failed to send your message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
       <Navbar />
 
-      <main className="flex-grow max-w-5xl mx-auto px-4 py-12 w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-        {/* Info Left */}
-        <div className="space-y-6">
-          <h1 className="text-4xl font-extrabold font-sans">Get in Touch</h1>
-          <p className="text-sm text-zinc-500 font-medium leading-relaxed">
-            Have questions about NGO auditing, volunteering drives, or integrating our donation API into your caterer workflow? Reach out to our team in Bhubaneswar.
-          </p>
-
-          <div className="space-y-4 pt-4 border-t border-white/20">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500">
-                <Mail className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-xs text-zinc-400 uppercase">Audit Email</h4>
-                <p className="text-sm font-semibold">support@platepulse.org</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500">
-                <Phone className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-xs text-zinc-400 uppercase">Helpline</h4>
-                <p className="text-sm font-semibold">+91 89846 76600</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-xs text-zinc-400 uppercase">Headquarters</h4>
-                <p className="text-sm font-semibold">Patia Industrial Estate, Bhubaneswar, Odisha</p>
-              </div>
-            </div>
+      <main className="flex-grow flex items-center justify-center px-4 py-16 w-full">
+        <div className="glass-panel p-8 bg-white/70 max-w-lg w-full shadow-2xl rounded-2xl border border-white/50 space-y-6 backdrop-blur-md">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight">Share Your Feedback</h1>
+            <p className="text-sm text-zinc-500 font-medium max-w-sm mx-auto">
+              We value your input. Send a message directly to our administration team.
+            </p>
           </div>
-        </div>
 
-        {/* Form Right */}
-        <div className="glass-panel p-8 bg-white/60 space-y-6">
-          <h3 className="font-bold text-lg">Send Message</h3>
           {success && (
-            <div className="p-3 bg-emerald-500/15 border border-emerald-500/20 text-emerald-600 rounded-lg text-xs font-semibold">
-              ✓ {success}
+            <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm font-semibold flex items-start gap-2 shadow-sm">
+              <span className="mt-0.5 text-base">✓</span>
+              <span>{success}</span>
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+          {error && (
+            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm font-semibold flex items-start gap-2 shadow-sm">
+              <span className="mt-0.5 text-base">⚠</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-zinc-500">Full Name</label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">Full Name</label>
               <input 
                 type="text" 
                 required
-                placeholder="Enter name"
+                disabled={loading}
+                placeholder="Enter your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="glass-input w-full"
+                className="glass-input w-full bg-white/50"
               />
             </div>
+
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-zinc-500">Email Address</label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">Email Address</label>
               <input 
                 type="email" 
                 required
-                placeholder="Enter email"
+                disabled={loading}
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="glass-input w-full"
+                className="glass-input w-full bg-white/50"
               />
             </div>
+
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-zinc-500">Message</label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">Rating</label>
+              <div className="flex gap-2 py-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => setRating(star)}
+                    className="focus:outline-none transition-transform active:scale-95"
+                  >
+                    <Star 
+                      className={`w-7 h-7 transition-all ${
+                        star <= rating 
+                          ? 'fill-amber-400 text-amber-400 filter drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]' 
+                          : 'text-zinc-300 hover:text-amber-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500">Message</label>
               <textarea 
-                rows={3} 
+                rows={4} 
                 required
-                placeholder="Enter your message..."
+                disabled={loading}
+                placeholder="Write your feedback or message here..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="glass-input w-full text-xs"
+                className="glass-input w-full text-xs bg-white/50"
               />
             </div>
-            <button type="submit" className="glass-btn-primary w-full py-2.5 text-sm font-bold flex items-center justify-center gap-2">
-              <Send className="w-4 h-4" />
-              <span>Send Message</span>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="glass-btn-primary w-full py-3 text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:pointer-events-none"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Sending Message...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Send Message</span>
+                </>
+              )}
             </button>
           </form>
         </div>

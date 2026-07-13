@@ -30,7 +30,10 @@ app.add_middleware(
 
 # Mount static folder to serve uploads locally (for offline dev/cloudinary fallback)
 static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
-os.makedirs(os.path.join(static_path, "uploads"), exist_ok=True)
+try:
+    os.makedirs(os.path.join(static_path, "uploads"), exist_ok=True)
+except Exception as e:
+    print(f"Warning: Could not create static uploads directory: {e}")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 # Register routes
