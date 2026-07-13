@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 @router.post("/send-otp")
 async def send_otp_endpoint(req: OTPRequest):
     email = req.email.strip().lower()
-    otp = generate_otp(email)
+    otp = await generate_otp(email)
     
     # Send email asynchronously or synchronously (synchronous fallback)
     sent = send_otp_email(email, otp)
@@ -26,7 +26,7 @@ async def send_otp_endpoint(req: OTPRequest):
 @router.post("/verify-otp")
 async def verify_otp_endpoint(req: OTPVerifyRequest):
     email = req.email.strip().lower()
-    is_valid = verify_otp(email, req.otp)
+    is_valid = await verify_otp(email, req.otp)
     if not is_valid:
         raise HTTPException(status_code=400, detail="Invalid or expired OTP.")
     return {"message": "OTP verified successfully", "email": email}
