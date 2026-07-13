@@ -9,12 +9,18 @@ from ..auth import get_password_hash, verify_password, create_access_token, ADMI
 from ..services.otp_service import generate_otp, verify_otp
 from ..services.email_service import send_otp_email
 
+import logging
+logger = logging.getLogger("platepulse.auth")
+
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/send-otp")
 async def send_otp_endpoint(req: OTPRequest):
     email = req.email.strip().lower()
     otp = await generate_otp(email)
+    
+    # Log the OTP in server logs so it is readable from Render Dashboard Logs for testing/development
+    logger.info(f"🔑 [OTP LOG] Generated verification code for {email}: {otp}")
     
     # Send email asynchronously or synchronously (synchronous fallback)
     sent, error_detail = send_otp_email(email, otp)
