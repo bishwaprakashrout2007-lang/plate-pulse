@@ -17,9 +17,9 @@ try:
     import firebase_admin
     from firebase_admin import credentials, firestore
     firebase_installed = True
-except ImportError:
+except BaseException as e:
     firebase_installed = False
-    logger.warning("firebase-admin package is not installed.")
+    logger.warning(f"firebase-admin package failed to import: {e}. Using in-memory mock database.")
 
 class FirestoreCursor:
     def __init__(self, collection, query):
