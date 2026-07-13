@@ -30,8 +30,9 @@ async def get_admin_dashboard_stats(db=Depends(get_db)):
             "status": "Completed",
             "createdAt": {"$gte": start_of_day, "$lt": end_of_day}
         })
-        # If in mock mode or no real data, let's inject a few random values so chart looks stunning!
-        if count == 0:
+        # Only inject mock values if running in-memory mock database
+        from app.database import is_mock
+        if count == 0 and is_mock:
             import random
             count = random.randint(2, 10)
             

@@ -46,26 +46,15 @@ const AdminDashboard = () => {
       setDonations(donationRes.data);
     } catch (e) {
       console.error("Error loading admin information:", e);
-      // Mock Fallback stats
+      setError("Failed to load live admin dashboard statistics.");
       setStats({
-        totalNgos: 8,
-        totalDonors: 142,
-        totalDonations: 310,
-        pendingVerifications: 2,
-        chartData: [
-          { day: 'Mon', donations: 4 },
-          { day: 'Tue', donations: 8 },
-          { day: 'Wed', donations: 5 },
-          { day: 'Thu', donations: 12 },
-          { day: 'Fri', donations: 9 },
-          { day: 'Sat', donations: 15 },
-          { day: 'Sun', donations: 7 }
-        ]
+        totalNgos: 0,
+        totalDonors: 0,
+        totalDonations: 0,
+        pendingVerifications: 0,
+        chartData: []
       });
-      setNgos([
-        { id: "1", ngoName: "Feed the Hungry NGO", email: "feedhungry@gmail.com", phone: "9861216929", status: "PendingVerification", darpanId: "OD/2026/0111", address: "Khandagiri, Bhubaneswar" },
-        { id: "2", ngoName: "Swosti Relief Trust", email: "swostirelief@gmail.com", phone: "8984676600", status: "Verified", darpanId: "OD/2026/0222", address: "Patia, Bhubaneswar" }
-      ]);
+      setNgos([]);
     } finally {
       setLoading(false);
     }

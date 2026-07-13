@@ -142,12 +142,12 @@ async def get_ngo_details(id: str, db=Depends(get_db)):
     ngo_item = dict(ngo)
     ngo_item["id"] = str(ngo["_id"])
     
-    # Calculate mock stats for page display
+    # Calculate stats for page display
     donation_count = await db.donations.count_documents({"ngoId": id, "status": "Completed"})
     ngo_item["donationStats"] = {
         "completed": donation_count,
-        "peopleFed": donation_count * 15 + random.randint(10, 50), # mock multiplier
-        "totalKg": donation_count * 8 + random.randint(5, 20)
+        "peopleFed": donation_count * 15,
+        "totalKg": donation_count * 8
     }
     return ngo_item
 
@@ -170,6 +170,11 @@ async def upload_kyc_documents(
             "$push": {"kycDocs": {"url": url, "name": file.filename, "uploadedAt": datetime.utcnow()}},
             "$set": {"kycDocUrl": url, "status": "PendingVerification"}
         }
+    )
+    # Update users collection in sync
+    await db.users.update_one(
+        {"_id": ngo_id},
+        {"$set": {"status": "PendingVerification"}}
     )
     
     return {"message": "Document uploaded successfully", "url": url}

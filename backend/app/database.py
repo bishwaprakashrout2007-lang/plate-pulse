@@ -344,16 +344,20 @@ async def verify_db_connection():
             init_firebase()
             
         if firestore_db is not None and not is_mock:
-            # Try a quick call to check connection with a timeout to prevent hanging!
             async def run_check():
                 return await asyncio.to_thread(lambda: list(firestore_db.collections()))
             
             try:
-                await asyncio.wait_for(run_check(), timeout=3.0)
+                # Increased timeout to 15.0s to accommodate Render cold start times
+                await asyncio.wait_for(run_check(), timeout=15.0)
                 logger.info("Firebase Firestore connection verified successfully.")
                 return True
             except asyncio.TimeoutError:
-                logger.warning("Firebase Firestore connection check timed out after 3 seconds. Switching to in-memory mock database.")
+                # Do not drop live database connection if credentials exist (might just be a slow initial ping)
+                if settings.FIREBASE_CREDENTIALS_JSON or settings.FIREBASE_SERVICE_ACCOUNT_JSON:
+                    logger.warning("Firebase Firestore connection check timed out, but credentials exist. Retaining live connection.")
+                    return True
+                logger.warning("Firebase Firestore connection check timed out. Switching to in-memory mock database.")
                 is_mock = True
                 return False
         else:
