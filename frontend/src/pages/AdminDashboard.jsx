@@ -13,6 +13,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'ngos', 'donations'
   const [stats, setStats] = useState({ totalNgos: 0, totalDonors: 0, totalDonations: 0, pendingVerifications: 0, chartData: [] });
   const [ngos, setNgos] = useState([]);
+  const [ngoFilter, setNgoFilter] = useState('all'); // 'all', 'pending', 'approved'
+  const [cleaning, setCleaning] = useState(false);
   const [donations, setDonations] = useState([]);
   
   const [loading, setLoading] = useState(false);
@@ -100,6 +102,25 @@ const AdminDashboard = () => {
       fetchAdminData();
     } catch (err) {
       setError('Failed to delete account.');
+    }
+  };
+
+  const handleCleanFakeNgos = async () => {
+    if (!window.confirm("Are you sure you want to clean up all test/fake NGOs from the database? This will delete accounts containing 'test', 'dummy', 'fake', 'sample', or default mock Darpan IDs. This action cannot be undone.")) {
+      return;
+    }
+    setCleaning(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await api.post('/admin/cleanup-fake-ngos');
+      setSuccess(res.data.message || "Fake test NGO data cleaned successfully!");
+      fetchAdminData();
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.detail || "Failed to cleanup fake NGOs.");
+    } finally {
+      setCleaning(false);
     }
   };
 
@@ -196,6 +217,16 @@ const AdminDashboard = () => {
       initZego();
     }
   }, [adminCallJoined, activeKycNgo, user]);
+
+  const filteredNgos = ngos.filter(ngo => {
+    if (ngoFilter === 'pending') {
+      return ngo.status === 'Pending' || ngo.status === 'PendingVerification' || ngo.status === 'DocumentsApproved';
+    }
+    if (ngoFilter === 'approved') {
+      return ngo.status === 'Verified';
+    }
+    return true;
+  });
 
   return (
     <div className="flex flex-col min-h-screen bg-admin-dashboard">
@@ -330,7 +361,55 @@ const AdminDashboard = () => {
         {/* TAB 2: MANAGE NGOs & VIDEO KYC QUEUE */}
         {activeTab === 'ngos' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold font-sans">Active NGO Partners & Audits</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold font-sans">Active NGO Partners & Audits</h2>
+                <p className="text-xs text-zinc-500 mt-0.5">Manage credentials, review documents, and audit Video KYC queue.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCleanFakeNgos}
+                  disabled={cleaning}
+                  className="px-4 py-2 text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-600 rounded-xl transition-all inline-flex items-center gap-1.5 shadow-sm"
+                >
+                  {cleaning ? 'Cleaning...' : 'Clean Fake NGOs 🧹'}
+                </button>
+              </div>
+            </div>
+
+            {/* Filter buttons control segment */}
+            <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+              <button
+                onClick={() => setNgoFilter('all')}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                  ngoFilter === 'all' 
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-sm' 
+                    : 'bg-white/30 border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/40'
+                }`}
+              >
+                Show All ({ngos.length})
+              </button>
+              <button
+                onClick={() => setNgoFilter('pending')}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                  ngoFilter === 'pending' 
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-sm' 
+                    : 'bg-white/30 border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/40'
+                }`}
+              >
+                Awaiting Approval ({ngos.filter(n => n.status !== 'Verified' && n.status !== 'Suspended').length})
+              </button>
+              <button
+                onClick={() => setNgoFilter('approved')}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                  ngoFilter === 'approved' 
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-sm' 
+                    : 'bg-white/30 border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/40'
+                }`}
+              >
+                Approved List ({ngos.filter(n => n.status === 'Verified').length})
+              </button>
+            </div>
 
             <div className="glass-panel overflow-hidden border border-white/20 bg-white/50">
               <div className="overflow-x-auto">
@@ -346,7 +425,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
-                    {ngos.map(ngo => (
+                    {filteredNgos.map(ngo => (
                       <tr key={ngo.id} className="hover:bg-white/20 dark:hover:bg-zinc-900/20 transition-colors">
                         <td className="px-6 py-4 font-bold text-zinc-800 dark:text-zinc-200">{ngo.ngoName}</td>
                         <td className="px-6 py-4 font-mono text-xs">{ngo.darpanId}</td>

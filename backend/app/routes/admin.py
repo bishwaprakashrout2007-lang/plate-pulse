@@ -114,3 +114,34 @@ async def delete_user_account(id: str, db=Depends(get_db)):
         raise HTTPException(status_code=404, detail="Account not found.")
         
     return {"message": "Account deleted successfully", "id": id}
+
+@router.post("/cleanup-fake-ngos")
+async def cleanup_fake_ngos(user: dict = Depends(get_current_user), db=Depends(get_db)):
+    if user.get("role") != "Admin":
+        raise HTTPException(status_code=403, detail="Admin permissions required.")
+        
+    fake_identifiers = ["test", "dummy", "fake", "mock", "example.com", "sample"]
+    delete_count = 0
+    
+    cursor = db.ngos.find({})
+    ngos = await cursor.to_list(length=300)
+    for ngo in ngos:
+        ngo_id = ngo["_id"]
+        email = ngo.get("email", "").lower()
+        ngo_name = ngo.get("ngoName", "").lower()
+        darpan = ngo.get("darpanId", "").lower()
+        
+        is_fake = False
+        if any(f in email for f in fake_identifiers):
+            is_fake = True
+        elif any(f in ngo_name for f in fake_identifiers):
+            is_fake = True
+        elif any(f in darpan for f in fake_identifiers) or darpan in ["12345", "123456", "or/2026/0123456"]:
+            is_fake = True
+            
+        if is_fake:
+            await db.ngos.delete_one({"_id": ngo_id})
+            await db.users.delete_one({"_id": ngo_id})
+            delete_count += 1
+            
+    return {"message": f"Successfully deleted {delete_count} fake NGO accounts."}
