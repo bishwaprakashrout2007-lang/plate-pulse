@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import api from './services/api';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -63,6 +64,31 @@ const PublicOnlyRoute = ({ children }) => {
 };
 
 function AppRoutes() {
+  useEffect(() => {
+    const trackVisit = async () => {
+      try {
+        let deviceId = localStorage.getItem('platepulse_device_id');
+        if (!deviceId) {
+          deviceId = 'dev_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+          localStorage.setItem('platepulse_device_id', deviceId);
+        }
+        
+        const ua = navigator.userAgent;
+        let deviceType = 'Desktop';
+        if (/tablet|ipad|playbook|silk/i.test(ua)) {
+          deviceType = 'Tablet';
+        } else if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Opera Mini/i.test(ua)) {
+          deviceType = 'Mobile';
+        }
+        
+        await api.post('/public/track-visit', { deviceId, deviceType });
+      } catch (err) {
+        console.warn("Could not track visitor:", err);
+      }
+    };
+    trackVisit();
+  }, []);
+
   return (
     <Routes>
       {/* Public Routes */}

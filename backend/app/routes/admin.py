@@ -38,12 +38,27 @@ async def get_admin_dashboard_stats(db=Depends(get_db)):
             
         chart_data.append({"day": day_str, "donations": count})
         
+    total_visitors = await db.visitors.count_documents({})
+    desktop_visitors = await db.visitors.count_documents({"deviceType": "Desktop"})
+    mobile_visitors = await db.visitors.count_documents({"deviceType": "Mobile"})
+    tablet_visitors = await db.visitors.count_documents({"deviceType": "Tablet"})
+    
+    if total_visitors == 0:
+        total_visitors = 1
+        desktop_visitors = 1
+        
     return {
         "totalNgos": total_ngos,
         "totalDonors": total_donors,
         "totalDonations": total_donations,
         "pendingVerifications": pending_verifications,
-        "chartData": chart_data
+        "chartData": chart_data,
+        "visitors": {
+            "total": total_visitors,
+            "desktop": desktop_visitors,
+            "mobile": mobile_visitors,
+            "tablet": tablet_visitors
+        }
     }
 
 @router.get("/ngos", dependencies=[admin_check])

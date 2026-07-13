@@ -279,3 +279,33 @@ async def public_upload(
 ):
     url = await upload_image(file, folder="public_uploads")
     return {"url": url}
+
+from pydantic import BaseModel
+
+class VisitTrack(BaseModel):
+    deviceId: str
+    deviceType: str
+
+@router.post("/track-visit")
+async def track_visitor_visit(req: VisitTrack, db=Depends(get_db)):
+    device_id = req.deviceId.strip()
+    device_type = req.deviceType.strip()
+    
+    existing = await db.visitors.find_one({"_id": device_id})
+    if existing:
+        await db.visitors.update_one(
+            {"_id": device_id},
+            {
+                "$set": {
+                    "deviceType": device_type,
+                    "lastVisitedAt": datetime.utcnow()
+                }
+            }
+        )
+    else:
+        await db.visitors.insert_one({
+            "_id": device_id,
+            "deviceType": device_type,
+            "lastVisitedAt": datetime.utcnow()
+        })
+    return {"status": "success"}

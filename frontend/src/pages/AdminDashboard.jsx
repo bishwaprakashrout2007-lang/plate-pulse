@@ -15,6 +15,7 @@ const AdminDashboard = () => {
   const [ngos, setNgos] = useState([]);
   const [ngoFilter, setNgoFilter] = useState('all'); // 'all', 'pending', 'approved'
   const [cleaning, setCleaning] = useState(false);
+  const [showVisitorPopover, setShowVisitorPopover] = useState(false);
   const [donations, setDonations] = useState([]);
   
   const [loading, setLoading] = useState(false);
@@ -654,6 +655,47 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Floating Visitor Count Popover Widget */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="relative text-left">
+          {showVisitorPopover && (
+            <div className="absolute bottom-14 right-0 w-64 glass-panel border border-white/20 bg-zinc-950/95 text-white p-4 rounded-2xl shadow-xl space-y-3 transition-all duration-300">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-[10px] font-bold font-sans tracking-wide text-zinc-400">DEVICE ANALYTICS</span>
+                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-amber-500 text-brand-dark rounded">Unique Devices</span>
+              </div>
+              
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between font-semibold">
+                  <span className="flex items-center gap-1.5 text-zinc-300">🖥️ Desktop Users</span>
+                  <span className="font-mono text-amber-400">{stats?.visitors?.desktop || 0}</span>
+                </div>
+                <div className="flex items-center justify-between font-semibold">
+                  <span className="flex items-center gap-1.5 text-zinc-300">📱 Mobile Users</span>
+                  <span className="font-mono text-amber-400">{stats?.visitors?.mobile || 0}</span>
+                </div>
+                <div className="flex items-center justify-between font-semibold">
+                  <span className="flex items-center gap-1.5 text-zinc-300">📟 Tablet Users</span>
+                  <span className="font-mono text-amber-400">{stats?.visitors?.tablet || 0}</span>
+                </div>
+              </div>
+              
+              <div className="text-[9px] text-zinc-500 border-t border-white/10 pt-2 text-center">
+                Tracks unique devices opening the site
+              </div>
+            </div>
+          )}
+          
+          <button
+            onClick={() => setShowVisitorPopover(!showVisitorPopover)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-brand-dark font-extrabold text-xs rounded-full shadow-lg hover:shadow-xl transition-all border border-amber-600/20 active:scale-95"
+          >
+            <span>👥</span>
+            <span>Visitors: {stats?.visitors?.total || 1}</span>
+          </button>
+        </div>
+      </div>
 
       <Footer />
     </div>
