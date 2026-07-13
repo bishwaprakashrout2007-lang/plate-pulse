@@ -35,9 +35,13 @@ class NGOResponse(NGOProfileCreate):
     fullName: str
     email: str
     phone: str
-    status: str = "Unverified"  # "Unverified", "Pending", "Verified", "Suspended"
+    status: str = "Unverified"  # "Unverified", "Pending", "Verified", "Suspended", "DocumentsApproved", "PendingVerification"
     rating: float = 5.0
     createdAt: datetime
+    approvedByAdmin: Optional[str] = None
+    documentsApprovedAt: Optional[datetime] = None
+    verifiedByAdmin: Optional[str] = None
+    verifiedAt: Optional[datetime] = None
 
     class Config:
         populate_by_name = True

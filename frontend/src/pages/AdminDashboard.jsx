@@ -131,11 +131,29 @@ const AdminDashboard = () => {
           const userID = user.userId;
           const userName = user.name || "Admin Auditor";
 
-          const ZegoUIKitPrebuilt = window.ZegoUIKitPrebuilt;
-          if (!ZegoUIKitPrebuilt) {
-            console.error("Zego SDK not loaded yet.");
-            return;
-          }
+          const getZegoPrebuilt = () => {
+            return new Promise((resolve, reject) => {
+              let checkCount = 0;
+              const check = () => {
+                if (window.ZegoUIKitPrebuilt) {
+                  resolve(window.ZegoUIKitPrebuilt);
+                } else if (checkCount > 10) {
+                  reject(new Error("Zego SDK load timed out"));
+                } else {
+                  checkCount++;
+                  setTimeout(check, 500);
+                }
+              };
+              check();
+            });
+          };
+
+          const ZegoUIKitPrebuilt = await getZegoPrebuilt().catch(err => {
+            console.error(err);
+            setError("ZegoCloud SDK is still loading. Please try again in a moment.");
+            return null;
+          });
+          if (!ZegoUIKitPrebuilt) return;
 
           const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
             appID,
@@ -369,39 +387,76 @@ const AdminDashboard = () => {
                           <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${
                             ngo.status === 'Verified' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' :
                             ngo.status === 'Suspended' ? 'bg-red-500/10 border-red-500/20 text-red-600' :
-                            'bg-amber-500/10 border-amber-500/20 text-amber-600'
+                            ngo.status === 'DocumentsApproved' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
+                            ngo.status === 'PendingVerification' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' :
+                            'bg-zinc-500/10 border-zinc-500/20 text-zinc-500'
                           }`}>
-                            {ngo.status}
+                            {ngo.status === 'DocumentsApproved' ? 'Docs Approved' : ngo.status}
                           </span>
+                          {ngo.status === 'DocumentsApproved' && (
+                            <p className="text-[9px] text-zinc-400 font-semibold mt-1">Approved by: {ngo.approvedByAdmin || 'Admin'}</p>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
-                          {ngo.status !== 'Verified' && (
-                            <button
-                              onClick={() => handleUpdateStatus(ngo.id, 'Verified')}
-                              className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 rounded-lg inline-flex items-center"
-                              title="Approve NGO"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          )}
-                          
+                          {/* Approve Documents step (only for PendingVerification) */}
                           {ngo.status === 'PendingVerification' && (
-                            <button
-                              onClick={() => startKycCall(ngo)}
-                              className="p-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/20 text-amber-600 rounded-lg inline-flex items-center"
-                              title="Start Video Auditing"
-                            >
-                              <Video className="w-4 h-4" />
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleUpdateStatus(ngo.id, 'DocumentsApproved')}
+                                className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-600 rounded-lg inline-flex items-center"
+                                title="Approve NGO Documents"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleUpdateStatus(ngo.id, 'Rejected')}
+                                className="p-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-600 rounded-lg inline-flex items-center"
+                                title="Reject Documents"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
 
-                          {ngo.status !== 'Suspended' && (
+                          {/* Video Call & Verify step (only for DocumentsApproved) */}
+                          {ngo.status === 'DocumentsApproved' && (
+                            <>
+                              <button
+                                onClick={() => startKycCall(ngo)}
+                                className="p-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/20 text-amber-600 rounded-lg inline-flex items-center"
+                                title="Start Video KYC"
+                              >
+                                <Video className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleUpdateStatus(ngo.id, 'Verified')}
+                                className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 rounded-lg inline-flex items-center"
+                                title="Verify & Approve NGO"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+
+                          {/* Suspension action (available for Verified NGOs) */}
+                          {ngo.status === 'Verified' && (
                             <button
                               onClick={() => handleUpdateStatus(ngo.id, 'Suspended')}
                               className="p-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 text-yellow-600 rounded-lg inline-flex items-center"
                               title="Suspend NGO"
                             >
                               <AlertTriangle className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Unsuspend action (available for Suspended/Rejected NGOs) */}
+                          {(ngo.status === 'Suspended' || ngo.status === 'Rejected') && (
+                            <button
+                              onClick={() => handleUpdateStatus(ngo.id, 'Unverified')}
+                              className="p-1.5 bg-zinc-500/10 hover:bg-zinc-500/20 border border-zinc-500/20 text-zinc-600 rounded-lg inline-flex items-center"
+                              title="Reset Status to Unverified"
+                            >
+                              <Check className="w-4 h-4" />
                             </button>
                           )}
 

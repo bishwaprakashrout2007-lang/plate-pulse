@@ -41,14 +41,22 @@ async def upload_image(file: UploadFile, folder: str = "platepulse") -> str:
         try:
             # Read file bytes
             contents = await file.read()
-            upload_result = cloudinary.uploader.upload(
-                contents,
-                folder=folder,
-                transformation=[
-                    {"width": 800, "height": 800, "crop": "limit"}, # Image compression
+            
+            # Detect file type
+            file_ext = os.path.splitext(file.filename)[1].lower() if file.filename else ""
+            is_image = file_ext in [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"]
+            
+            params = {
+                "folder": folder,
+                "resource_type": "auto"
+            }
+            if is_image:
+                params["transformation"] = [
+                    {"width": 800, "height": 800, "crop": "limit"},
                     {"quality": "auto"}
                 ]
-            )
+                
+            upload_result = cloudinary.uploader.upload(contents, **params)
             return upload_result.get("secure_url")
         except Exception as e:
             logger.error(f"Cloudinary upload failed: {e}. Falling back to local storage.")

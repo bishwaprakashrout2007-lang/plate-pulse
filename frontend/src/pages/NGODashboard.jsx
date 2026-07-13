@@ -5,6 +5,7 @@ import { Heart, FileText, Video, CheckCircle, Clock, X, MapPin, Phone, User, Awa
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import TrackingMap from '../components/TrackingMap';
 
 const NGODashboard = () => {
   const { user, updateNgoStatusLocally } = useAuth();
@@ -120,11 +121,29 @@ const NGODashboard = () => {
           const userID = user.userId;
           const userName = user.name || "NGO Representative";
 
-          const ZegoUIKitPrebuilt = window.ZegoUIKitPrebuilt;
-          if (!ZegoUIKitPrebuilt) {
-            console.error("Zego SDK not loaded yet.");
-            return;
-          }
+          const getZegoPrebuilt = () => {
+            return new Promise((resolve, reject) => {
+              let checkCount = 0;
+              const check = () => {
+                if (window.ZegoUIKitPrebuilt) {
+                  resolve(window.ZegoUIKitPrebuilt);
+                } else if (checkCount > 10) {
+                  reject(new Error("Zego SDK load timed out"));
+                } else {
+                  checkCount++;
+                  setTimeout(check, 500);
+                }
+              };
+              check();
+            });
+          };
+
+          const ZegoUIKitPrebuilt = await getZegoPrebuilt().catch(err => {
+            console.error(err);
+            setError("ZegoCloud SDK is still loading. Please try again in a moment.");
+            return null;
+          });
+          if (!ZegoUIKitPrebuilt) return;
 
           const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
             appID,
@@ -242,7 +261,7 @@ const NGODashboard = () => {
   };
 
   // 1. UNVERIFIED OR PENDING VERIFICATION NGO INTERFACE
-  if (user && (user.status === 'Unverified' || user.status === 'Pending' || user.status === 'PendingVerification')) {
+  if (user && (user.status === 'Unverified' || user.status === 'Pending' || user.status === 'PendingVerification' || user.status === 'DocumentsApproved')) {
     return (
       <div className="flex flex-col min-h-screen bg-ngo-dashboard">
         <Navbar />
@@ -260,11 +279,25 @@ const NGODashboard = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 text-left">
               {/* Step 1: Submit Documents */}
-              <div className="glass-card p-6 space-y-4">
-                <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
-                  <FileText className="w-5 h-5" />
-                  <span>Step 1: Upload Documents</span>
+              <div className={`glass-card p-6 space-y-4 border ${user.status === 'DocumentsApproved' ? 'border-emerald-500/30 bg-emerald-500/5' : ''}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
+                    <FileText className="w-5 h-5" />
+                    <span>Step 1: Upload Documents</span>
+                  </div>
+                  {user.status === 'DocumentsApproved' ? (
+                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 uppercase bg-emerald-500/10 px-2 py-0.5 rounded">
+                      <Check className="w-3.5 h-3.5" /> Approved
+                    </span>
+                  ) : user.status === 'PendingVerification' ? (
+                    <span className="flex items-center gap-1 text-xs font-bold text-amber-600 uppercase bg-amber-500/10 px-2 py-0.5 rounded animate-pulse">
+                      <Clock className="w-3.5 h-3.5" /> Under Review
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold text-zinc-400 uppercase">Required</span>
+                  )}
                 </div>
+
                 <p className="text-xs text-zinc-500">
                   Upload Darpan Registration and Tax certificates (Supported: PDF, JPG, PNG).
                 </p>
@@ -302,38 +335,69 @@ const NGODashboard = () => {
                   </div>
                 ) : null}
 
-                <form onSubmit={handleDocUpload} className="space-y-3 pt-2 border-t border-white/10">
-                  <label className="block text-[10px] font-extrabold text-zinc-400 uppercase">
-                    Upload {ngoDetails?.kycDocs?.length > 0 || ngoDetails?.kycDocUrl ? 'Another' : ''} Document:
-                  </label>
-                  <input 
-                    type="file" 
-                    required
-                    onChange={(e) => setKycFile(e.target.files[0])}
-                    className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-600 hover:file:bg-amber-500/20 cursor-pointer"
-                  />
-                  <button type="submit" disabled={loading} className="glass-btn-primary w-full py-2 text-xs font-bold">
-                    {loading ? 'Uploading...' : (ngoDetails?.kycDocs?.length > 0 || ngoDetails?.kycDocUrl ? 'Upload Additional Doc' : 'Upload Certificates')}
-                  </button>
-                </form>
+                {user.status === 'DocumentsApproved' ? (
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-400 mt-2">
+                    <p>✓ Documents verified successfully!</p>
+                    <p className="text-[10px] text-zinc-500 mt-1">Approved by: {ngoDetails?.approvedByAdmin || 'Auditor Admin'}</p>
+                  </div>
+                ) : user.status === 'PendingVerification' ? (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-400 mt-2">
+                    <p>⌛ Awaiting administrator document approval.</p>
+                    <p className="text-[10px] text-zinc-500 mt-1">Your documents have been submitted. Video KYC will unlock once approved.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleDocUpload} className="space-y-3 pt-2 border-t border-white/10">
+                    <label className="block text-[10px] font-extrabold text-zinc-400 uppercase">
+                      Select Certificate File:
+                    </label>
+                    <input 
+                      type="file" 
+                      required
+                      onChange={(e) => setKycFile(e.target.files[0])}
+                      className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-600 hover:file:bg-amber-500/20 cursor-pointer w-full"
+                    />
+                    <button type="submit" disabled={loading} className="glass-btn-primary w-full py-2 text-xs font-bold">
+                      {loading ? 'Uploading...' : 'Upload Certificates'}
+                    </button>
+                  </form>
+                )}
               </div>
 
               {/* Step 2: Live Video Verification */}
-              <div className="glass-card p-6 space-y-4">
-                <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
-                  <Video className="w-5 h-5" />
-                  <span>Step 2: Join Live Video call</span>
+              <div className={`glass-card p-6 space-y-4 border ${user.status !== 'DocumentsApproved' ? 'opacity-60 bg-zinc-105/5' : 'border-amber-500/30'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
+                    <Video className="w-5 h-5" />
+                    <span>Step 2: Join Live Video call</span>
+                  </div>
+                  {user.status === 'DocumentsApproved' ? (
+                    <span className="text-xs font-bold text-emerald-600 uppercase bg-emerald-500/10 px-2 py-0.5 rounded animate-pulse">
+                      Unlocked
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold text-zinc-400 uppercase flex items-center gap-1">
+                      🔒 Locked
+                    </span>
+                  )}
                 </div>
+                
                 <p className="text-xs text-zinc-500">
                   Connect live with one of our admins to verify Darpan ID credentials. Maximum 2 users in room.
                 </p>
-                <button
-                  onClick={joinVideoCall}
-                  disabled={videoCallJoined}
-                  className="glass-btn-primary w-full py-2.5 text-xs font-bold"
-                >
-                  Join Call Chamber
-                </button>
+
+                {user.status === 'DocumentsApproved' ? (
+                  <button
+                    onClick={joinVideoCall}
+                    disabled={videoCallJoined}
+                    className="glass-btn-primary w-full py-2.5 text-xs font-bold bg-amber-500 hover:bg-amber-600"
+                  >
+                    Join Call Chamber
+                  </button>
+                ) : (
+                  <div className="text-center p-3 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-lg text-xs font-semibold text-zinc-500">
+                    🔒 Locked until Step 1 (Document Approval) is complete.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -570,14 +634,20 @@ const NGODashboard = () => {
                 
                 {trackingRequest ? (
                   <div className="space-y-4">
-                    <div className="rounded-xl overflow-hidden h-40 bg-zinc-200 border border-white/20 relative flex items-center justify-center">
-                      {/* Leaflet map is configured. Displaying navigation route overlay */}
-                      <div className="absolute inset-0 bg-emerald-500/5 animate-pulse"></div>
-                      <div className="text-center p-4 z-10 space-y-1">
-                        <Navigation className="w-8 h-8 text-emerald-600 mx-auto animate-bounce" />
-                        <h5 className="font-bold text-xs">Dynamic Navigation Route Active</h5>
-                        <p className="text-[10px] text-zinc-400">Connecting coordinates to {trackingRequest.address}</p>
-                      </div>
+                    <div className="rounded-xl overflow-hidden h-48 border border-white/20 relative" style={{ zIndex: 10 }}>
+                      <TrackingMap 
+                        receiverCoords={[ngoDetails?.latitude || 20.2961, ngoDetails?.longitude || 85.8245]} 
+                        donorCoords={(() => {
+                          const receiverCoords = [ngoDetails?.latitude || 20.2961, ngoDetails?.longitude || 85.8245];
+                          let hash = 0;
+                          for (let i = 0; i < trackingRequest.id.length; i++) {
+                            hash = trackingRequest.id.charCodeAt(i) + ((hash << 5) - hash);
+                          }
+                          const latOffset = (hash % 100) / 4500;
+                          const lngOffset = ((hash >> 8) % 100) / 4500;
+                          return [receiverCoords[0] + latOffset, receiverCoords[1] + lngOffset];
+                        })()} 
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-center">

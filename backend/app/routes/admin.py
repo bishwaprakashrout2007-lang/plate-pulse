@@ -14,7 +14,7 @@ async def get_admin_dashboard_stats(db=Depends(get_db)):
     total_ngos = await db.ngos.count_documents({})
     total_donors = await db.users.count_documents({"role": "Client"})
     total_donations = await db.donations.count_documents({"status": "Completed"})
-    pending_verifications = await db.ngos.count_documents({"status": {"$in": ["Pending", "PendingVerification"]}})
+    pending_verifications = await db.ngos.count_documents({"status": {"$in": ["Pending", "PendingVerification", "DocumentsApproved"]}})
     
     # Simple weekly analytics chart generator: last 7 days donation count
     today = datetime.utcnow()
@@ -69,25 +69,38 @@ async def list_all_donations_for_admin(db=Depends(get_db)):
         res.append(item)
     return res
 
-@router.put("/ngos/{id}/status", dependencies=[admin_check])
+@router.put("/ngos/{id}/status")
 async def update_ngo_verification_status(
     id: str,
-    status_update: dict, # {"status": "Verified" | "Rejected" | "Suspended" | "Unverified"}
+    status_update: dict, # {"status": "Verified" | "Rejected" | "Suspended" | "Unverified" | "DocumentsApproved" | "PendingVerification"}
+    user: dict = Depends(get_current_user),
     db=Depends(get_db)
 ):
+    if user.get("role") != "Admin":
+        raise HTTPException(status_code=403, detail="Admin permissions required.")
+        
     new_status = status_update.get("status")
-    if new_status not in ["Verified", "Rejected", "Suspended", "Unverified"]:
+    if new_status not in ["Verified", "Rejected", "Suspended", "Unverified", "DocumentsApproved", "PendingVerification"]:
         raise HTTPException(status_code=400, detail="Invalid status action.")
         
     ngo = await db.ngos.find_one({"_id": id})
     if not ngo:
         raise HTTPException(status_code=404, detail="NGO profile not found.")
         
-    # Update NGO status
-    await db.ngos.update_one({"_id": id}, {"$set": {"status": new_status}})
+    # Update NGO status and log admin details
+    update_data = {"status": new_status}
+    if new_status == "DocumentsApproved":
+        update_data["approvedByAdmin"] = user["email"]
+        update_data["documentsApprovedAt"] = datetime.utcnow()
+    elif new_status == "Verified":
+        update_data["verifiedByAdmin"] = user["email"]
+        update_data["verifiedAt"] = datetime.utcnow()
+        
+    await db.ngos.update_one({"_id": id}, {"$set": update_data})
     
-    # Also update user's role status if suspended/verified if necessary, 
-    # but status field in NGO profile is sufficient.
+    # Keep users collection status in sync
+    await db.users.update_one({"_id": id}, {"$set": {"status": new_status}})
+    
     return {"message": f"NGO status successfully set to {new_status}", "id": id}
 
 @router.delete("/users/{id}", dependencies=[admin_check])

@@ -6,6 +6,7 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import InteractiveMap from '../components/InteractiveMap';
+import TrackingMap from '../components/TrackingMap';
 
 const ClientDashboard = () => {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ const ClientDashboard = () => {
   const [pickupFilter, setPickupFilter] = useState(''); // '', 'today', 'tomorrow', 'this_week'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNgo, setSelectedNgo] = useState(null);
+  const [trackingRequestId, setTrackingRequestId] = useState(null);
 
   // Donation Form States
   const [showForm, setShowForm] = useState(false);
@@ -481,6 +483,56 @@ const ClientDashboard = () => {
                       <span>Completed</span>
                     </div>
                   </div>
+
+                  {req.status === 'Accepted' && (
+                    <div className="pt-3 border-t border-white/10 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-amber-500 flex items-center gap-1">
+                          🛵 Rider is on the way
+                        </span>
+                        <button
+                          onClick={() => setTrackingRequestId(trackingRequestId === req.id ? null : req.id)}
+                          className="text-xs font-extrabold text-amber-600 dark:text-amber-400 hover:underline"
+                        >
+                          {trackingRequestId === req.id ? 'Close Map' : 'Track Rider Live'}
+                        </button>
+                      </div>
+
+                      {trackingRequestId === req.id && (
+                        <div className="space-y-3">
+                          <div className="h-44 rounded-xl overflow-hidden border border-white/20 relative" style={{ zIndex: 10 }}>
+                            <TrackingMap
+                              receiverCoords={(() => {
+                                const targetNgo = ngos.find(n => n.id === req.ngoId) || { latitude: 20.2961, longitude: 85.8245 };
+                                return [targetNgo.latitude || 20.2961, targetNgo.longitude || 85.8245];
+                              })()}
+                              donorCoords={(() => {
+                                const targetNgo = ngos.find(n => n.id === req.ngoId) || { latitude: 20.2961, longitude: 85.8245 };
+                                const receiverCoords = [targetNgo.latitude || 20.2961, targetNgo.longitude || 85.8245];
+                                let hash = 0;
+                                for (let i = 0; i < req.id.length; i++) {
+                                  hash = req.id.charCodeAt(i) + ((hash << 5) - hash);
+                                }
+                                const latOffset = (hash % 100) / 4500;
+                                const lngOffset = ((hash >> 8) % 100) / 4500;
+                                return [receiverCoords[0] + latOffset, receiverCoords[1] + lngOffset];
+                              })()}
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-bold">
+                            <div className="p-2 bg-white/40 rounded-lg border border-white/10">
+                              <span className="text-zinc-400">Distance</span>
+                              <p className="text-sm font-extrabold text-zinc-800 dark:text-zinc-200">1.8 KM</p>
+                            </div>
+                            <div className="p-2 bg-white/40 rounded-lg border border-white/10">
+                              <span className="text-zinc-400">ETA</span>
+                              <p className="text-sm font-extrabold text-amber-500">6 mins</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {req.donorPhotoUrl && (
                     <div className="pt-2">
