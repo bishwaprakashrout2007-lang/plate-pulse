@@ -17,9 +17,9 @@ async def send_otp_endpoint(req: OTPRequest):
     otp = await generate_otp(email)
     
     # Send email asynchronously or synchronously (synchronous fallback)
-    sent = send_otp_email(email, otp)
+    sent, error_detail = send_otp_email(email, otp)
     if not sent:
-        raise HTTPException(status_code=500, detail="Failed to send OTP. Please check SMTP settings.")
+        raise HTTPException(status_code=500, detail=f"Failed to send OTP. Please check SMTP settings. Error: {error_detail}")
         
     return {"message": "OTP sent successfully to email", "email": email}
 

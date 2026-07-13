@@ -6,7 +6,7 @@ from ..config import settings
 
 logger = logging.getLogger("platepulse.email")
 
-def send_email(to_email: str, subject: str, body_text: str, body_html: str = None):
+def send_email(to_email: str, subject: str, body_text: str, body_html: str = None) -> tuple:
     # Fallback to logger if SMTP configuration is empty or dummy
     is_mock = (
         not settings.SMTP_USER 
@@ -20,7 +20,7 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
         logger.info(f"Subject: {subject}")
         logger.info(f"Body:\n{body_text}")
         logger.info(f"-----------------------")
-        return True
+        return True, "Mock email sent"
 
     try:
         msg = MIMEMultipart("alternative")
@@ -49,10 +49,10 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
         server.sendmail(from_addr, to_email, msg.as_string())
         server.quit()
         logger.info(f"Email successfully sent to {to_email}")
-        return True
+        return True, ""
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {e}")
-        return False
+        return False, str(e)
 
 def send_otp_email(to_email: str, otp: str):
     subject = "PlatePulse – Your OTP Verification Code"
