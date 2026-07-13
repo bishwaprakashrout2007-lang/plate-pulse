@@ -5,10 +5,6 @@ class Settings(BaseSettings):
     PORT: int = 8000
     HOST: str = "0.0.0.0"
     
-    # MongoDB Settings
-    MONGO_URI: str = "mongodb://localhost:27017"
-    DB_NAME: str = "platepulse"
-    
     # JWT Settings
     JWT_SECRET: str = "plate_pulse_secure_jwt_local_secret_2026"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
