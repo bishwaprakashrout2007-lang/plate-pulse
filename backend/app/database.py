@@ -83,6 +83,9 @@ class FirestoreCollection:
                             val = datetime.fromisoformat(val.replace("Z", "+00:00"))
                         except:
                             pass
+                    if isinstance(val, datetime) and isinstance(q_v, datetime):
+                        val = val.replace(tzinfo=None)
+                        q_v = q_v.replace(tzinfo=None)
                     if isinstance(val, str) and not isinstance(q_v, str):
                         q_v = str(q_v)
                     if not (val >= q_v):
@@ -97,6 +100,9 @@ class FirestoreCollection:
                             val = datetime.fromisoformat(val.replace("Z", "+00:00"))
                         except:
                             pass
+                    if isinstance(val, datetime) and isinstance(q_v, datetime):
+                        val = val.replace(tzinfo=None)
+                        q_v = q_v.replace(tzinfo=None)
                     if isinstance(val, str) and not isinstance(q_v, str):
                         q_v = str(q_v)
                     if not (val < q_v):
@@ -231,8 +237,8 @@ class FirestoreCollection:
                 firestore_updates[k] = v
             
             for k, v in push_fields.items():
-                from google.cloud import firestore as gc_firestore
-                firestore_updates[k] = gc_firestore.FieldValue.array_union(v)
+                from google.cloud.firestore import ArrayUnion
+                firestore_updates[k] = ArrayUnion([v])
                 
             if firestore_updates:
                 await asyncio.to_thread(doc_ref.update, firestore_updates)
