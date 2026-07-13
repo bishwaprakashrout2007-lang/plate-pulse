@@ -67,8 +67,10 @@ const Login = () => {
           }
         }
       } catch (err) {
-        console.error("Firebase redirect login error:", err);
-        setError(err.toString());
+        console.error("Firebase redirect login error (can occur if Google Auth domain is blocked):", err);
+        // Do not set UI error state for background redirect check failures,
+        // as they can happen on page load if Google Auth is blocked (e.g. AdBlockers)
+        // and shouldn't block the user from using normal email/password login.
       } finally {
         setLoading(false);
       }
@@ -171,7 +173,11 @@ const Login = () => {
       }
     } catch (err) {
       console.error(err);
-      setError(err.toString());
+      if (err.code === 'auth/network-request-failed' || err.message?.includes('network-request-failed')) {
+        setError('Google Login failed: Network connection blocked. This typically happens if you are offline, behind a firewall, or using an ad-blocker (like Brave Shield or uBlock) that blocks Google Authentication. Please check your network, disable blockers, or sign in using Email & Password.');
+      } else {
+        setError(err.toString());
+      }
     } finally {
       setLoading(false);
     }
